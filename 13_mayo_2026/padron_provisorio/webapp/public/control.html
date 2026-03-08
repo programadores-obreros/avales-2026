@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUTEBA 2026 - Control Padron Provisorio</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --surface3: #475569;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --orange: #f97316;
+      --purple: #a855f7;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface2);
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      flex-wrap: wrap;
+    }
+    header h1 { font-size: 1rem; font-weight: 600; white-space: nowrap; }
+    header h1 span { color: var(--accent); }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: var(--bg);
+      border: 2px solid var(--surface2);
+      border-radius: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      flex: 1;
+      max-width: 400px;
+      transition: border-color 0.2s;
+    }
+    .search-box:focus-within { border-color: var(--accent); }
+    .search-box input {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 0.85rem;
+      outline: none;
+      width: 100%;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+    .search-box input::placeholder { color: var(--text-muted); }
+    .search-icon { color: var(--text-muted); font-size: 0.85rem; }
+
+    .header-stats {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+    .header-stats strong { color: var(--text); }
+
+    /* Confidence badges */
+    .conf-badge {
+      padding: 0.05rem 0.3rem;
+      border-radius: 0.2rem;
+      font-size: 0.55rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .conf-confirmado { background: var(--green); color: #000; }
+    .conf-alta { background: var(--accent); color: white; }
+    .conf-media { background: var(--yellow); color: #000; }
+    .conf-sin { background: var(--red); color: white; opacity: 0.7; }
+
+    .dni-corregido {
+      text-decoration: line-through;
+      color: var(--text-muted);
+      font-size: 0.6rem;
+      display: block;
+    }
+    .escuela-2022 {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    /* Search results dropdown */
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      border-radius: 0 0 0.5rem 0.5rem;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 300;
+      display: none;
+    }
+    .search-results.visible { display: block; }
+    .search-result-item {
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      display: flex;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .search-result-item:hover { background: rgba(59,130,246,0.15); }
+    .search-result-item .sr-dni {
+      font-family: monospace;
+      color: var(--accent);
+      font-weight: 600;
+      min-width: 80px;
+    }
+    .search-result-item .sr-nombre { flex: 1; }
+    .search-result-item .sr-pag {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+    }
+
+    /* Page navigation */
+    .page-nav {
+      display: flex;
+      gap: 0.3rem;
+      padding: 0.5rem 1rem;
+      overflow-x: auto;
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface2);
+      flex-shrink: 0;
+    }
+    .page-nav::-webkit-scrollbar { height: 4px; }
+    .page-nav::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+
+    .pnav-btn {
+      padding: 0.3rem 0.5rem;
+      border: 2px solid var(--surface2);
+      border-radius: 0.4rem;
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.15rem;
+      min-width: 55px;
+      position: relative;
+    }
+    .pnav-btn:hover { border-color: var(--accent); }
+    .pnav-btn.active { border-color: var(--accent); background: var(--accent); color: white; }
+    .pnav-btn.has-conflict { border-color: var(--orange); }
+    .pnav-btn.has-conflict.active { background: var(--orange); border-color: var(--orange); }
+    .pnav-btn.hash-page { opacity: 0.6; }
+    .pnav-btn .pnav-count { font-size: 0.6rem; color: var(--text-muted); }
+    .pnav-btn.active .pnav-count { color: rgba(255,255,255,0.8); }
+    .pnav-btn .pnav-edited {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    /* Main layout */
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Image panel */
+    .img-panel {
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid var(--surface2);
+      overflow: hidden;
+    }
+    .img-panel-header {
+      padding: 0.4rem 0.75rem;
+      background: var(--surface2);
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .img-panel-body {
+      flex: 1;
+      overflow: auto;
+      background: #000;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .img-panel-body img {
+      width: 100%;
+      height: auto;
+      display: block;
+      cursor: zoom-in;
+      transition: transform 0.2s;
+    }
+    .img-panel-body img.zoomed {
+      width: auto;
+      max-width: none;
+      cursor: zoom-out;
+    }
+
+    /* Data panel */
+    .data-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .data-panel-header {
+      padding: 0.4rem 0.75rem;
+      background: var(--surface2);
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      gap: 0.5rem;
+    }
+    .data-panel-body {
+      flex: 1;
+      overflow: auto;
+    }
+
+    /* Toolbar buttons */
+    .tb-btn {
+      padding: 0.2rem 0.5rem;
+      border: 1px solid var(--surface3);
+      background: var(--surface);
+      color: var(--text-muted);
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 0.65rem;
+      transition: all 0.15s;
+    }
+    .tb-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+    .tb-btn.danger:hover { background: var(--red); border-color: var(--red); }
+    .tb-btn.success { background: var(--green); color: white; border-color: var(--green); }
+
+    /* Editable table */
+    .edit-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+    }
+    .edit-table thead { position: sticky; top: 0; z-index: 10; }
+    .edit-table th {
+      background: var(--surface2);
+      padding: 0.4rem 0.5rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    .edit-table td {
+      padding: 0.25rem 0.4rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+    .edit-table tr:hover td { background: rgba(59,130,246,0.08); }
+    .edit-table tr.highlight td { background: rgba(59,130,246,0.2) !important; }
+    .edit-table tr.conflict td { background: rgba(249,115,22,0.1); }
+    .edit-table tr.edited td { background: rgba(34,197,94,0.08); }
+
+    .edit-table .col-num {
+      color: var(--text-muted);
+      font-size: 0.6rem;
+      text-align: right;
+      width: 22px;
+      user-select: none;
+    }
+    .edit-table .col-dni {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      color: var(--accent);
+      font-weight: 600;
+      min-width: 75px;
+    }
+    .edit-table .col-nombre { min-width: 180px; }
+    .edit-table .col-escuela {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.7rem;
+      min-width: 120px;
+    }
+    .edit-table .col-obs {
+      font-size: 0.65rem;
+      color: var(--orange);
+      max-width: 100px;
+    }
+    .edit-table .col-fuente {
+      font-size: 0.6rem;
+      text-align: center;
+      width: 40px;
+    }
+    .edit-table .col-actions {
+      width: 28px;
+      text-align: center;
+    }
+
+    .fuente-badge {
+      padding: 0.1rem 0.3rem;
+      border-radius: 0.2rem;
+      font-size: 0.55rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .fuente-cruce { background: var(--purple); color: white; }
+    .fuente-preprod { background: var(--accent); color: white; }
+    .fuente-control { background: var(--green); color: white; }
+
+    .escuela-jubilado { color: var(--yellow); }
+    .escuela-sede { color: var(--orange); }
+    .escuela-codigo { color: var(--green); }
+    .escuela-vacio { color: var(--red); opacity: 0.5; }
+
+    /* Editable cell */
+    .editable {
+      cursor: text;
+      padding: 0.15rem 0.3rem;
+      border-radius: 0.2rem;
+      transition: background 0.15s;
+      min-height: 1.2em;
+    }
+    .editable:hover { background: rgba(255,255,255,0.05); }
+    .editable:focus {
+      background: var(--bg);
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+      color: white;
+    }
+    .editable.changed {
+      border-left: 2px solid var(--green);
+      padding-left: calc(0.3rem - 2px);
+    }
+
+    /* Conflict tooltip */
+    .conflict-icon {
+      color: var(--orange);
+      cursor: help;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    /* Status bar */
+    .status-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--surface2);
+      padding: 0.3rem 1rem;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .status-bar .save-status { color: var(--green); }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Add row */
+    .add-row-bar {
+      padding: 0.3rem 0.5rem;
+      background: var(--surface);
+      border-top: 1px solid var(--surface2);
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* Delete button */
+    .del-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.7rem;
+      opacity: 0.3;
+      transition: all 0.15s;
+      padding: 0.15rem;
+      border-radius: 0.2rem;
+    }
+    .del-btn:hover { opacity: 1; color: var(--red); background: rgba(239,68,68,0.1); }
+
+    @media (max-width: 900px) {
+      .main-content { grid-template-columns: 1fr; }
+      .img-panel { max-height: 40vh; }
+    }
+
+    .kbd {
+      background: var(--surface2);
+      border: 1px solid var(--surface3);
+      border-radius: 3px;
+      padding: 0 4px;
+      font-size: 0.6rem;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDocs, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const app = initializeApp({
+      apiKey: "AIzaSyDeGyMnTg2ICElfv1YALmW5Ky9-VMEfqog",
+      authDomain: "suteba-2026.firebaseapp.com",
+      projectId: "suteba-2026",
+      storageBucket: "suteba-2026.firebasestorage.app",
+      messagingSenderId: "440127524100",
+      appId: "1:440127524100:web:dbcf54bc66fb9897795451"
+    });
+
+    const db = getFirestore(app);
+    window._firestoreDb = db;
+    window._firestoreDoc = doc;
+    window._firestoreSetDoc = setDoc;
+    window._firestoreGetDocs = getDocs;
+    window._firestoreCollection = collection;
+    window._firestoreOnSnapshot = onSnapshot;
+    window._firestoreReady = true;
+    window.dispatchEvent(new Event('firestore-ready'));
+  </script>
+</head>
+<body>
+  <header>
+    <h1><span>SUTEBA 2026</span> | Control Padron</h1>
+    <div class="search-box" style="position:relative">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="search-input" placeholder="Buscar por DNI o nombre..." autocomplete="off">
+      <div class="search-results" id="search-results"></div>
+    </div>
+    <div class="header-stats">
+      <span>Regs: <strong id="stat-regs">0</strong></span>
+      <span><span class="conf-badge conf-confirmado">CONF</span> <strong id="stat-conf">0</strong></span>
+      <span><span class="conf-badge conf-alta">ALTA</span> <strong id="stat-alta">0</strong></span>
+      <span><span class="conf-badge conf-media">MED</span> <strong id="stat-media">0</strong></span>
+      <span><span class="conf-badge conf-sin">S/V</span> <strong id="stat-sin">0</strong></span>
+      <span>Edit: <strong id="stat-edited" style="color:var(--green)">0</strong></span>
+      <span>
+        <span class="kbd">&larr;</span><span class="kbd">&rarr;</span>
+        <span class="kbd">Tab</span>
+      </span>
+    </div>
+  </header>
+
+  <nav class="page-nav" id="page-nav"></nav>
+
+  <div class="main-content">
+    <div class="img-panel">
+      <div class="img-panel-header">
+        <span id="img-title">Imagen</span>
+        <div style="display:flex;gap:0.25rem">
+          <button class="tb-btn" onclick="zoomImg()">Zoom</button>
+        </div>
+      </div>
+      <div class="img-panel-body" id="img-body">
+        <div class="empty-state">Selecciona una pagina</div>
+      </div>
+    </div>
+
+    <div class="data-panel">
+      <div class="data-panel-header">
+        <span id="data-title">Datos</span>
+        <div style="display:flex;gap:0.25rem">
+          <button class="tb-btn" onclick="addRow()">+ Fila</button>
+          <button class="tb-btn" onclick="undoPageEdits()" title="Deshacer cambios de esta pagina">Deshacer</button>
+          <button class="tb-btn" onclick="exportCSV()">Exportar CSV</button>
+        </div>
+      </div>
+      <div class="data-panel-body" id="data-body">
+        <div class="empty-state">Selecciona una pagina</div>
+      </div>
+      <div class="add-row-bar" id="add-row-bar" style="display:none">
+        <button class="tb-btn" onclick="addRow()" style="width:100%">+ Agregar fila</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span id="status-msg">Cargando datos...</span>
+    <span id="save-status"></span>
+  </div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let allData = null;       // Full control.json
+let pages = [];           // Array of page objects
+let currentPage = null;   // Currently selected page
+let searchIndex = [];     // Flat index for search: [{dni, nombre, pageIdx, regIdx}]
+let editedPages = {};     // pageId -> { registros: [...], ts: timestamp }
+let highlightDni = null;  // DNI to highlight after navigation
+
+const STORAGE_KEY = 'padron_control_edits_v1';
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  setStatus('Cargando datos...');
+  const res = await fetch('data/control.json');
+  allData = await res.json();
+  pages = allData.pages;
+
+  // Load saved edits from localStorage
+  loadEdits();
+
+  // Build search index
+  buildSearchIndex();
+
+  // Stats
+  document.getElementById('stat-regs').textContent = allData.total_registros;
+  document.getElementById('stat-conf').textContent = allData.stats?.confirmado || 0;
+  document.getElementById('stat-alta').textContent = allData.stats?.alta || 0;
+  document.getElementById('stat-media').textContent = allData.stats?.media || 0;
+  document.getElementById('stat-sin').textContent = allData.stats?.sin_validar || 0;
+  updateEditCount();
+
+  renderPageNav();
+
+  if (pages.length > 0) {
+    selectPage(0);
+  }
+
+  setStatus(`${pages.length} paginas, ${allData.total_registros} registros cargados`);
+}
+
+// ============================================================
+// SEARCH INDEX
+// ============================================================
+function buildSearchIndex() {
+  searchIndex = [];
+  for (let pi = 0; pi < pages.length; pi++) {
+    const regs = getPageRegistros(pi);
+    for (let ri = 0; ri < regs.length; ri++) {
+      searchIndex.push({
+        dni: (regs[ri].dni || '').replace(/\./g, ''),
+        nombre: (regs[ri].nombre || '').toUpperCase(),
+        pageIdx: pi,
+        regIdx: ri,
+        pageNum: pages[pi].numero,
+      });
+    }
+  }
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+const searchInput = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim();
+  if (q.length < 2) {
+    searchResults.classList.remove('visible');
+    return;
+  }
+
+  const isNumeric = /^\d+$/.test(q);
+  let results;
+
+  if (isNumeric) {
+    results = searchIndex.filter(s => s.dni.includes(q));
+  } else {
+    const upper = q.toUpperCase();
+    results = searchIndex.filter(s => s.nombre.includes(upper));
+  }
+
+  results = results.slice(0, 20);
+
+  if (results.length === 0) {
+    searchResults.innerHTML = '<div style="padding:0.75rem;color:var(--text-muted);font-size:0.8rem">Sin resultados</div>';
+  } else {
+    searchResults.innerHTML = results.map(r => {
+      const regs = getPageRegistros(r.pageIdx);
+      const reg = regs[r.regIdx];
+      return `<div class="search-result-item" onclick="goToResult(${r.pageIdx},'${reg.dni}')">
+        <span class="sr-dni">${reg.dni}</span>
+        <span class="sr-nombre">${reg.nombre}</span>
+        <span class="sr-pag">Pag ${r.pageNum}</span>
+      </div>`;
+    }).join('');
+  }
+
+  searchResults.classList.add('visible');
+});
+
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    searchResults.classList.remove('visible');
+    searchInput.blur();
+  }
+  if (e.key === 'Enter') {
+    const first = searchResults.querySelector('.search-result-item');
+    if (first) first.click();
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-box')) {
+    searchResults.classList.remove('visible');
+  }
+});
+
+function goToResult(pageIdx, dni) {
+  searchResults.classList.remove('visible');
+  highlightDni = dni;
+  selectPage(pageIdx);
+}
+
+// ============================================================
+// PAGE NAVIGATION
+// ============================================================
+function renderPageNav() {
+  const nav = document.getElementById('page-nav');
+  nav.innerHTML = pages.map((p, i) => {
+    const isActive = currentPage === i;
+    const hasConflict = p.registros.some(r => r.conflicto);
+    const isHash = !p.confirmada;
+    const isEdited = !!editedPages[p.id];
+    let cls = 'pnav-btn';
+    if (isActive) cls += ' active';
+    if (hasConflict) cls += ' has-conflict';
+    if (isHash) cls += ' hash-page';
+    return `<button class="${cls}" onclick="selectPage(${i})" id="nav-${p.id}">
+      ${isEdited ? '<div class="pnav-edited"></div>' : ''}
+      <span>${p.numero}</span>
+      <span class="pnav-count">${getPageRegistros(i).length}</span>
+    </button>`;
+  }).join('');
+}
+
+function selectPage(idx) {
+  currentPage = idx;
+  const page = pages[idx];
+
+  // Scroll nav button into view
+  const btn = document.getElementById(`nav-${page.id}`);
+  if (btn) {
+    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+
+  renderPageNav();
+  renderImage();
+  renderData();
+}
+
+// ============================================================
+// GET REGISTROS (with edits applied)
+// ============================================================
+function getPageRegistros(pageIdx) {
+  const page = pages[pageIdx];
+  if (editedPages[page.id]) {
+    return editedPages[page.id].registros;
+  }
+  return page.registros;
+}
+
+// ============================================================
+// IMAGE RENDERING
+// ============================================================
+function renderImage() {
+  const body = document.getElementById('img-body');
+  const title = document.getElementById('img-title');
+  if (currentPage === null) {
+    body.innerHTML = '<div class="empty-state">Selecciona una pagina</div>';
+    return;
+  }
+  const page = pages[currentPage];
+  title.textContent = `Pagina ${page.numero}${page.confirmada ? '' : ' (hash)'}`;
+  if (page.imagen) {
+    body.innerHTML = `<img src="${page.imagen}" alt="Pagina ${page.numero}" onclick="toggleZoom(this)">`;
+  } else {
+    body.innerHTML = '<div class="empty-state">Sin imagen</div>';
+  }
+}
+
+function toggleZoom(img) {
+  img.classList.toggle('zoomed');
+}
+
+function zoomImg() {
+  const img = document.querySelector('.img-panel-body img');
+  if (img) img.classList.toggle('zoomed');
+}
+
+// ============================================================
+// DATA RENDERING
+// ============================================================
+function renderData() {
+  const body = document.getElementById('data-body');
+  const title = document.getElementById('data-title');
+  const addBar = document.getElementById('add-row-bar');
+
+  if (currentPage === null) {
+    body.innerHTML = '<div class="empty-state">Selecciona una pagina</div>';
+    addBar.style.display = 'none';
+    return;
+  }
+
+  const page = pages[currentPage];
+  const regs = getPageRegistros(currentPage);
+  const isEdited = !!editedPages[page.id];
+
+  title.textContent = `Pag ${page.numero} - ${regs.length} registros${isEdited ? ' (editado)' : ''}`;
+  addBar.style.display = 'block';
+
+  if (regs.length === 0) {
+    body.innerHTML = '<div class="empty-state">Sin registros</div>';
+    return;
+  }
+
+  let html = `<table class="edit-table">
+    <thead><tr>
+      <th>#</th><th>V</th><th>DNI</th><th>APELLIDO Y NOMBRE</th><th>ESCUELA 2026</th><th>ESC 2022</th><th>OBS</th><th></th>
+    </tr></thead><tbody>`;
+
+  for (let i = 0; i < regs.length; i++) {
+    const r = regs[i];
+    const escCls = escuelaClass(r.escuela);
+    const isHighlight = highlightDni && r.dni === highlightDni;
+    const isChanged = r._changed;
+
+    let rowCls = '';
+    if (isHighlight) rowCls = 'highlight';
+    else if (isChanged) rowCls = 'edited';
+
+    // Confidence badge
+    const conf = r.confianza || '';
+    let confHtml = '';
+    if (conf === 'CONFIRMADO') confHtml = '<span class="conf-badge conf-confirmado" title="DNI match directo">OK</span>';
+    else if (conf === 'ALTA') confHtml = '<span class="conf-badge conf-alta" title="Nombre match + DNI ~1-2 dígitos">A</span>';
+    else if (conf === 'MEDIA') confHtml = '<span class="conf-badge conf-media" title="Nombre match + DNI parcial">M</span>';
+    else confHtml = '<span class="conf-badge conf-sin" title="Sin validar contra 2022">?</span>';
+
+    // DNI corregido indicator
+    const dniCorr = r.dni_ocr ? `<span class="dni-corregido" title="OCR original">${esc(r.dni_ocr)}</span>` : '';
+
+    // Escuela 2022
+    const esc22 = r.escuela_2022 || '';
+    const escCambio = esc22 && r.escuela && esc22 !== r.escuela;
+
+    html += `<tr class="${rowCls}" data-idx="${i}">
+      <td class="col-num">${i + 1}</td>
+      <td style="text-align:center;width:28px">${confHtml}</td>
+      <td class="col-dni">
+        <div class="editable${isChanged ? ' changed' : ''}" contenteditable="true"
+             data-field="dni" data-idx="${i}"
+             onblur="onCellEdit(this)" onkeydown="cellKeydown(event, this)">${esc(r.dni)}</div>
+        ${dniCorr}
+      </td>
+      <td class="col-nombre">
+        <div class="editable${isChanged ? ' changed' : ''}" contenteditable="true"
+             data-field="nombre" data-idx="${i}"
+             onblur="onCellEdit(this)" onkeydown="cellKeydown(event, this)">${esc(r.nombre)}</div>
+        ${r.nombre_ocr ? `<span class="dni-corregido" title="OCR original">${esc(r.nombre_ocr)}</span>` : ''}
+      </td>
+      <td class="col-escuela ${escCls}">
+        <div class="editable${isChanged ? ' changed' : ''}" contenteditable="true"
+             data-field="escuela" data-idx="${i}"
+             onblur="onCellEdit(this)" onkeydown="cellKeydown(event, this)">${esc(r.escuela) || '-'}</div>
+      </td>
+      <td class="col-escuela" style="font-size:0.65rem;${escCambio ? 'color:var(--orange)' : 'color:var(--text-muted)'}">${esc(esc22) || '-'}</td>
+      <td class="col-obs">
+        <div class="editable" contenteditable="true"
+             data-field="obs" data-idx="${i}"
+             onblur="onCellEdit(this)" onkeydown="cellKeydown(event, this)">${esc(r.obs)}</div>
+      </td>
+      <td class="col-actions">
+        <button class="del-btn" onclick="deleteRow(${i})" title="Eliminar fila">&#10005;</button>
+      </td>
+    </tr>`;
+  }
+
+  html += '</tbody></table>';
+  body.innerHTML = html;
+
+  // Scroll to highlighted row
+  if (highlightDni) {
+    const hlRow = body.querySelector('tr.highlight');
+    if (hlRow) {
+      setTimeout(() => hlRow.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+    }
+    highlightDni = null;
+  }
+}
+
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escuelaClass(e) {
+  if (!e) return 'escuela-vacio';
+  if (e.includes('JUBILADO')) return 'escuela-jubilado';
+  if (e.includes('SEDE')) return 'escuela-sede';
+  return 'escuela-codigo';
+}
+
+// ============================================================
+// CELL EDITING
+// ============================================================
+function onCellEdit(el) {
+  const field = el.dataset.field;
+  const idx = parseInt(el.dataset.idx);
+  const newVal = el.textContent.trim();
+  const page = pages[currentPage];
+
+  // Get current registros (may already be edited)
+  let regs;
+  if (editedPages[page.id]) {
+    regs = editedPages[page.id].registros;
+  } else {
+    // Deep copy original
+    regs = JSON.parse(JSON.stringify(page.registros));
+  }
+
+  const oldVal = regs[idx][field] || '';
+  if (newVal === oldVal) return;
+
+  regs[idx][field] = newVal;
+  regs[idx]._changed = true;
+
+  // Save
+  editedPages[page.id] = {
+    registros: regs,
+    ts: Date.now(),
+  };
+
+  saveEdits();
+  updateEditCount();
+
+  // Mark cell as changed visually
+  el.classList.add('changed');
+  el.closest('tr').classList.add('edited');
+
+  // Rebuild search index
+  buildSearchIndex();
+}
+
+function cellKeydown(e, el) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    el.blur();
+    // Move to next row, same field
+    const idx = parseInt(el.dataset.idx);
+    const field = el.dataset.field;
+    const next = document.querySelector(`[data-field="${field}"][data-idx="${idx + 1}"]`);
+    if (next) next.focus();
+  }
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    el.blur();
+    const idx = parseInt(el.dataset.idx);
+    const fields = ['dni', 'nombre', 'escuela', 'obs'];
+    const fi = fields.indexOf(el.dataset.field);
+    if (e.shiftKey) {
+      // Previous field or previous row
+      if (fi > 0) {
+        const prev = document.querySelector(`[data-field="${fields[fi - 1]}"][data-idx="${idx}"]`);
+        if (prev) prev.focus();
+      } else if (idx > 0) {
+        const prev = document.querySelector(`[data-field="${fields[fields.length - 1]}"][data-idx="${idx - 1}"]`);
+        if (prev) prev.focus();
+      }
+    } else {
+      // Next field or next row
+      if (fi < fields.length - 1) {
+        const next = document.querySelector(`[data-field="${fields[fi + 1]}"][data-idx="${idx}"]`);
+        if (next) next.focus();
+      } else {
+        const next = document.querySelector(`[data-field="${fields[0]}"][data-idx="${idx + 1}"]`);
+        if (next) next.focus();
+      }
+    }
+  }
+  if (e.key === 'Escape') {
+    el.blur();
+  }
+}
+
+// ============================================================
+// ROW OPERATIONS
+// ============================================================
+function addRow() {
+  if (currentPage === null) return;
+  const page = pages[currentPage];
+  let regs;
+  if (editedPages[page.id]) {
+    regs = editedPages[page.id].registros;
+  } else {
+    regs = JSON.parse(JSON.stringify(page.registros));
+  }
+
+  regs.push({
+    dni: '',
+    nombre: '',
+    escuela: '',
+    escuela_2022: '',
+    tipo: 'DNI',
+    obs: '',
+    validacion: '',
+    confianza: '',
+    dni_ocr: '',
+    nombre_ocr: '',
+    _changed: true,
+  });
+
+  editedPages[page.id] = { registros: regs, ts: Date.now() };
+  saveEdits();
+  updateEditCount();
+  renderData();
+  renderPageNav();
+
+  // Focus the new DNI cell
+  setTimeout(() => {
+    const newCell = document.querySelector(`[data-field="dni"][data-idx="${regs.length - 1}"]`);
+    if (newCell) {
+      newCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      newCell.focus();
+    }
+  }, 50);
+}
+
+function deleteRow(idx) {
+  if (currentPage === null) return;
+  const page = pages[currentPage];
+  const regs = getPageRegistros(currentPage);
+  const reg = regs[idx];
+  const desc = reg.dni ? `${reg.dni} - ${reg.nombre}` : `fila ${idx + 1}`;
+
+  if (!confirm(`Eliminar: ${desc}?`)) return;
+
+  let editRegs;
+  if (editedPages[page.id]) {
+    editRegs = editedPages[page.id].registros;
+  } else {
+    editRegs = JSON.parse(JSON.stringify(page.registros));
+  }
+
+  editRegs.splice(idx, 1);
+  editedPages[page.id] = { registros: editRegs, ts: Date.now() };
+  saveEdits();
+  updateEditCount();
+  buildSearchIndex();
+  renderData();
+  renderPageNav();
+}
+
+async function undoPageEdits() {
+  if (currentPage === null) return;
+  const page = pages[currentPage];
+  if (!editedPages[page.id]) return;
+  if (!confirm(`Deshacer todos los cambios de pagina ${page.numero}?`)) return;
+
+  delete editedPages[page.id];
+  // Remove from Firestore
+  if (firestoreReady) {
+    try {
+      const db = window._firestoreDb;
+      const docFn = window._firestoreDoc;
+      const { deleteDoc } = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js");
+      await deleteDoc(docFn(db, 'edits', page.id));
+    } catch (e) { console.error('Firestore delete error:', e); }
+  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(editedPages)); } catch(e) {}
+  updateEditCount();
+  buildSearchIndex();
+  renderData();
+  renderPageNav();
+}
+
+// ============================================================
+// PERSISTENCE (Firestore + localStorage fallback)
+// ============================================================
+let firestoreReady = false;
+let saveQueue = {};      // Pending saves: pageId -> registros
+let saveTimer = null;
+
+function waitForFirestore() {
+  return new Promise(resolve => {
+    if (window._firestoreReady) { firestoreReady = true; resolve(); return; }
+    window.addEventListener('firestore-ready', () => { firestoreReady = true; resolve(); });
+  });
+}
+
+async function saveEdits() {
+  // Always save to localStorage as fallback
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(editedPages));
+  } catch (e) { /* ignore */ }
+
+  if (!firestoreReady) {
+    document.getElementById('save-status').innerHTML = '<span style="color:var(--yellow)">Local</span>';
+    return;
+  }
+
+  // Debounce: accumulate saves, flush after 500ms idle
+  const page = pages[currentPage];
+  if (page && editedPages[page.id]) {
+    saveQueue[page.id] = editedPages[page.id];
+  }
+
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSaves, 500);
+}
+
+async function flushSaves() {
+  const db = window._firestoreDb;
+  const docFn = window._firestoreDoc;
+  const setDocFn = window._firestoreSetDoc;
+
+  const ids = Object.keys(saveQueue);
+  if (ids.length === 0) return;
+
+  document.getElementById('save-status').innerHTML = '<span style="color:var(--yellow)">Guardando...</span>';
+
+  try {
+    for (const pageId of ids) {
+      const data = saveQueue[pageId];
+      await setDocFn(docFn(db, 'edits', pageId), {
+        registros: data.registros,
+        ts: data.ts,
+        updatedAt: Date.now(),
+      });
+    }
+    saveQueue = {};
+    document.getElementById('save-status').innerHTML = '<span class="save-status">Guardado en Firestore</span>';
+  } catch (e) {
+    console.error('Firestore save error:', e);
+    document.getElementById('save-status').innerHTML = '<span style="color:var(--red)">Error Firestore</span>';
+  }
+}
+
+async function loadEdits() {
+  // Start with localStorage
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      editedPages = JSON.parse(saved);
+    }
+  } catch (e) {
+    editedPages = {};
+  }
+
+  // Then load from Firestore (overrides localStorage)
+  await waitForFirestore();
+  try {
+    const db = window._firestoreDb;
+    const getDocs = window._firestoreGetDocs;
+    const collectionFn = window._firestoreCollection;
+
+    const snapshot = await getDocs(collectionFn(db, 'edits'));
+    let firestoreCount = 0;
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const pageId = doc.id;
+      // Use Firestore version if newer than local
+      const localTs = editedPages[pageId]?.ts || 0;
+      const remoteTs = data.ts || 0;
+      if (remoteTs >= localTs) {
+        editedPages[pageId] = { registros: data.registros, ts: data.ts };
+      }
+      firestoreCount++;
+    });
+
+    if (firestoreCount > 0) {
+      // Sync back to localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(editedPages));
+      setStatus(`Cargados ${firestoreCount} paginas editadas desde Firestore`);
+    }
+
+    // Subscribe to real-time updates
+    subscribeToEdits();
+  } catch (e) {
+    console.error('Firestore load error:', e);
+    setStatus('Firestore no disponible, usando localStorage');
+  }
+}
+
+function subscribeToEdits() {
+  const db = window._firestoreDb;
+  const collectionFn = window._firestoreCollection;
+  const onSnapshot = window._firestoreOnSnapshot;
+
+  onSnapshot(collectionFn(db, 'edits'), (snapshot) => {
+    let changed = false;
+    snapshot.docChanges().forEach(change => {
+      if (change.type === 'modified' || change.type === 'added') {
+        const pageId = change.doc.id;
+        const data = change.doc.data();
+        const localTs = editedPages[pageId]?.ts || 0;
+        if (data.ts > localTs) {
+          editedPages[pageId] = { registros: data.registros, ts: data.ts };
+          changed = true;
+        }
+      }
+    });
+    if (changed) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(editedPages));
+      updateEditCount();
+      buildSearchIndex();
+      if (currentPage !== null) renderData();
+      renderPageNav();
+    }
+  });
+}
+
+function updateEditCount() {
+  const count = Object.keys(editedPages).length;
+  document.getElementById('stat-edited').textContent = count;
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function exportCSV() {
+  let csv = 'TIPO,DNI,DNI_OCR,APELLIDO_NOMBRE,ESCUELA_2026,ESCUELA_2022,VALIDACION,CONFIANZA,OBSERVACION,PAGINA\n';
+
+  for (let pi = 0; pi < pages.length; pi++) {
+    const page = pages[pi];
+    const regs = getPageRegistros(pi);
+    for (const r of regs) {
+      csv += [
+        csvEsc(r.tipo || 'DNI'),
+        csvEsc(r.dni),
+        csvEsc(r.dni_ocr || ''),
+        csvEsc(r.nombre),
+        csvEsc(r.escuela),
+        csvEsc(r.escuela_2022 || ''),
+        csvEsc(r.validacion || ''),
+        csvEsc(r.confianza || ''),
+        csvEsc(r.obs),
+        page.numero,
+      ].join(',') + '\n';
+    }
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `padron_control_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  setStatus('CSV exportado');
+}
+
+function csvEsc(s) {
+  if (!s) return '';
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+// ============================================================
+// KEYBOARD NAVIGATION
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  // Don't navigate if editing a cell
+  if (e.target.isContentEditable || e.target.tagName === 'INPUT') return;
+
+  if (e.key === 'ArrowLeft' && currentPage > 0) {
+    selectPage(currentPage - 1);
+  } else if (e.key === 'ArrowRight' && currentPage < pages.length - 1) {
+    selectPage(currentPage + 1);
+  } else if (e.key === '/' || (e.key === 'f' && (e.ctrlKey || e.metaKey))) {
+    e.preventDefault();
+    searchInput.focus();
+  }
+});
+
+// ============================================================
+// UTILS
+// ============================================================
+function setStatus(msg) {
+  document.getElementById('status-msg').textContent = msg;
+}
+
+// ============================================================
+// GO
+// ============================================================
+init();
+</script>
+</body>
+</html>

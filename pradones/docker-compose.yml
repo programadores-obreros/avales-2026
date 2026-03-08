@@ -1,0 +1,25 @@
+services:
+  padron-ocr:
+    build: .
+    volumes:
+      - .:/data
+    command: ["--input", "/data/padron_oficial.pdf", "--output", "/data/output"]
+
+  cruzar:
+    build: .
+    volumes:
+      - .:/data
+    entrypoint: ["python", "cruzar_datos.py"]
+    command: [
+      "--padron", "/data/output/padron.csv",
+      "--zonas", "/data/Zonas elección Suteba 2022.xlsx",
+      "--sedes", "/data/padrones_por_escuela.xls",
+      "--output", "/data/output"
+    ]
+
+  test:
+    build: .
+    volumes:
+      - .:/data
+    entrypoint: ["python", "-m", "pytest"]
+    command: ["/app/test_cruce.py", "-v"]

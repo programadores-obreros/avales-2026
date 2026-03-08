@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SUTEBA 2026 - Captura Padrón</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #1a1a1a;
+      --surface2: #2a2a2a;
+      --text: #e0e0e0;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --accent: #3b82f6;
+      --purple: #a855f7;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Camera viewport */
+    .camera-wrap { flex: 1; position: relative; overflow: hidden; }
+    video { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Guide overlay */
+    .guide-overlay { position: absolute; inset: 0; pointer-events: none; }
+    .guide-frame {
+      position: absolute; top: 3%; left: 2%; right: 2%; bottom: 10%;
+      border: 3px solid rgba(59,130,246,0.6); border-radius: 8px;
+      transition: border-color 0.3s;
+    }
+    .guide-frame.q-good { border-color: rgba(34,197,94,0.8); box-shadow: inset 0 0 30px rgba(34,197,94,0.05); }
+    .guide-frame.q-warn { border-color: rgba(234,179,8,0.8); }
+    .guide-frame.q-bad { border-color: rgba(239,68,68,0.8); }
+    .corner { position: absolute; width: 20px; height: 20px; }
+    .corner-tl { top: -2px; left: -2px; border-top: 4px solid #fff; border-left: 4px solid #fff; }
+    .corner-tr { top: -2px; right: -2px; border-top: 4px solid #fff; border-right: 4px solid #fff; }
+    .corner-bl { bottom: -2px; left: -2px; border-bottom: 4px solid #fff; border-left: 4px solid #fff; }
+    .corner-br { bottom: -2px; right: -2px; border-bottom: 4px solid #fff; border-right: 4px solid #fff; }
+
+    /* ROI for page number */
+    .roi-box {
+      position: absolute; bottom: 1%; right: 3%; width: 22%; height: 9%;
+      border: 2px dashed rgba(168,85,247,0.7); border-radius: 4px;
+    }
+    .roi-label {
+      position: absolute; top: -16px; right: 0;
+      font-size: 9px; color: rgba(168,85,247,0.8); font-weight: 700;
+    }
+
+    /* Quality badges */
+    .quality-bar {
+      position: absolute; top: 6px; left: 6px; right: 6px;
+      display: flex; gap: 4px; z-index: 10;
+    }
+    .q-badge {
+      padding: 3px 7px; border-radius: 5px; font-size: 10px; font-weight: 700;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+      display: flex; align-items: center; gap: 3px;
+    }
+    .q-dot { width: 7px; height: 7px; border-radius: 50%; background: #555; }
+    .q-good .q-dot { background: var(--green); }
+    .q-warn .q-dot { background: var(--yellow); }
+    .q-bad .q-dot { background: var(--red); }
+
+    /* Page number display */
+    .page-box {
+      position: absolute; bottom: 1%; left: 3%;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+      padding: 6px 14px; border-radius: 8px; z-index: 10;
+    }
+    .page-box .page-label { font-size: 11px; color: #888; }
+    .page-box .page-num { font-size: 26px; font-weight: 800; color: var(--accent); font-family: monospace; }
+    .page-box .page-num.detected { color: var(--green); }
+
+    /* Auto-ring */
+    .auto-ring {
+      position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%);
+      width: 56px; height: 56px; display: none; z-index: 20;
+    }
+    .auto-ring.visible { display: block; }
+    .auto-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .auto-ring circle { fill: none; stroke-width: 4; cx: 28; cy: 28; r: 24; }
+    .ring-bg { stroke: rgba(255,255,255,0.12); }
+    .ring-fg { stroke: var(--green); stroke-dasharray: 150.8; stroke-dashoffset: 150.8; stroke-linecap: round; }
+    .ring-text {
+      position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; font-size: 9px; font-weight: 800; color: var(--green);
+    }
+
+    /* Light meter (full screen overlay) */
+    .light-meter {
+      position: absolute; inset: 0; z-index: 50;
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    }
+    .light-meter.visible { display: flex; }
+    .lm-circle {
+      width: 180px; height: 180px; border-radius: 50%;
+      border: 8px solid #333; display: flex; align-items: center;
+      justify-content: center; flex-direction: column;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .lm-circle.good { border-color: var(--green); background: rgba(34,197,94,0.1); }
+    .lm-circle.warn { border-color: var(--yellow); background: rgba(234,179,8,0.1); }
+    .lm-circle.bad { border-color: var(--red); background: rgba(239,68,68,0.1); }
+    .lm-value { font-size: 48px; font-weight: 800; }
+    .lm-label { font-size: 14px; color: #888; margin-top: 4px; }
+    .lm-details { margin-top: 24px; text-align: center; font-size: 13px; color: #aaa; line-height: 2; }
+    .lm-hint { margin-top: 20px; font-size: 12px; color: #666; }
+
+    /* Flash */
+    .flash {
+      position: absolute; inset: 0; background: white; opacity: 0;
+      pointer-events: none; z-index: 100; transition: opacity 0.1s;
+    }
+    .flash.active { opacity: 0.7; transition: none; }
+
+    /* Bottom controls */
+    .controls {
+      background: var(--surface); padding: 8px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; flex-shrink: 0; border-top: 1px solid #333;
+    }
+
+    /* Mode selector */
+    .mode-bar {
+      background: var(--bg); padding: 6px 8px;
+      display: flex; gap: 4px; flex-shrink: 0; border-top: 1px solid #222;
+      overflow-x: auto;
+    }
+    .mode-btn {
+      padding: 6px 12px; border: 2px solid #333; border-radius: 6px;
+      background: transparent; color: #888; font-size: 11px; font-weight: 700;
+      cursor: pointer; white-space: nowrap; transition: all 0.15s;
+    }
+    .mode-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.1); }
+    .mode-btn.active-green { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.1); }
+
+    .capture-btn {
+      width: 64px; height: 64px; border-radius: 50%;
+      border: 4px solid white; background: transparent;
+      cursor: pointer; position: relative; flex-shrink: 0;
+    }
+    .capture-btn::after {
+      content: ''; position: absolute; inset: 4px; border-radius: 50%;
+      background: white; transition: all 0.12s;
+    }
+    .capture-btn:active::after { background: var(--green); transform: scale(0.85); }
+    .capture-btn.burst::after { background: var(--red); }
+    .capture-btn.burst { border-color: var(--red); animation: pulse-red 1s infinite; }
+    @keyframes pulse-red {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+    }
+
+    .ctrl-side {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      min-width: 70px;
+    }
+    .ctrl-side .count { font-size: 22px; font-weight: 800; color: var(--green); }
+    .ctrl-side .label { font-size: 10px; color: #888; }
+
+    /* Burst config */
+    .burst-config {
+      display: none; align-items: center; gap: 8px;
+      font-size: 12px; color: #aaa;
+    }
+    .burst-config.visible { display: flex; }
+    .burst-config select {
+      background: var(--surface2); color: var(--text); border: 1px solid #444;
+      border-radius: 4px; padding: 4px 8px; font-size: 13px;
+    }
+    .burst-timer {
+      font-size: 20px; font-weight: 800; color: var(--yellow);
+      min-width: 30px; text-align: center;
+    }
+
+    /* Gallery */
+    .gallery-modal {
+      position: fixed; inset: 0; background: var(--bg); z-index: 200;
+      display: none; flex-direction: column;
+    }
+    .gallery-modal.visible { display: flex; }
+    .gallery-header {
+      padding: 12px 16px; background: var(--surface);
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #333;
+    }
+    .gallery-header h2 { font-size: 16px; }
+    .gallery-close {
+      background: none; border: none; color: var(--text);
+      font-size: 24px; cursor: pointer; padding: 4px 8px;
+    }
+    .gallery-grid {
+      flex: 1; overflow-y: auto; padding: 8px;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 4px; align-content: start;
+    }
+    .gallery-item {
+      position: relative; aspect-ratio: 3/4; border-radius: 6px;
+      overflow: hidden; cursor: pointer; border: 2px solid transparent;
+    }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+    .gallery-item .gi-label {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.8); padding: 4px; text-align: center;
+      font-size: 11px; font-weight: 700;
+    }
+    .gallery-item.selected { border-color: var(--red); }
+    .gallery-actions {
+      padding: 12px; display: flex; gap: 8px; justify-content: center;
+      border-top: 1px solid #333;
+    }
+    .gallery-btn {
+      padding: 10px 24px; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+    .btn-red { background: var(--red); color: white; }
+    .btn-blue { background: var(--accent); color: white; }
+
+    /* Preview modal (manual capture) */
+    .preview-modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+      z-index: 200; display: none; flex-direction: column;
+    }
+    .preview-modal.visible { display: flex; }
+    .preview-img { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .preview-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .preview-actions { padding: 12px; display: flex; gap: 12px; justify-content: center; }
+    .preview-btn {
+      padding: 12px 28px; border: none; border-radius: 8px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    .btn-discard { background: var(--red); color: white; }
+    .btn-save { background: var(--green); color: white; }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: rgba(34,197,94,0.9); color: white; padding: 14px 28px;
+      border-radius: 12px; font-size: 16px; font-weight: 700;
+      z-index: 300; display: none; text-align: center;
+    }
+    .toast.visible { display: block; }
+
+    canvas { display: none; }
+
+    /* Save mode toggle */
+    .save-toggle {
+      font-size: 10px !important; padding: 4px 10px !important;
+      border-width: 2px !important; text-transform: uppercase;
+    }
+    .save-toggle.online { border-color: var(--green) !important; color: var(--green) !important; background: rgba(34,197,94,0.1) !important; }
+    .save-toggle.offline { border-color: var(--yellow) !important; color: var(--yellow) !important; background: rgba(234,179,8,0.1) !important; }
+
+    /* Upload indicator */
+    .upload-indicator {
+      position: fixed; bottom: 130px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);
+      padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700;
+      z-index: 150; display: none; align-items: center; gap: 6px;
+    }
+    .upload-indicator.visible { display: flex; }
+    .upload-indicator .spinner {
+      width: 14px; height: 14px; border: 2px solid #555;
+      border-top-color: var(--green); border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .upload-indicator.error { color: var(--red); }
+    .upload-indicator.success { color: var(--green); }
+  </style>
+</head>
+<body>
+
+<div class="camera-wrap">
+  <video id="video" autoplay playsinline muted></video>
+  <div class="guide-overlay">
+    <div class="quality-bar">
+      <span class="q-badge" id="q-luz"><span class="q-dot"></span> Luz</span>
+      <span class="q-badge" id="q-contraste"><span class="q-dot"></span> Contraste</span>
+      <span class="q-badge" id="q-nitidez"><span class="q-dot"></span> Nitidez</span>
+      <span class="q-badge" id="q-general"><span class="q-dot"></span> OK</span>
+    </div>
+    <div class="guide-frame" id="guide-frame">
+      <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+    </div>
+    <div class="roi-box"><span class="roi-label">N° Pág</span></div>
+    <div class="page-box">
+      <span class="page-label">Pág</span><br>
+      <span class="page-num" id="page-num">--</span>
+    </div>
+    <div class="auto-ring" id="auto-ring">
+      <svg viewBox="0 0 56 56"><circle class="ring-bg"/><circle class="ring-fg" id="ring-fg"/></svg>
+      <div class="ring-text">QUIETO</div>
+    </div>
+  </div>
+  <!-- Light meter overlay -->
+  <div class="light-meter" id="light-meter">
+    <div class="lm-circle" id="lm-circle">
+      <div class="lm-value" id="lm-value">--</div>
+      <div class="lm-label">BRILLO</div>
+    </div>
+    <div class="lm-details" id="lm-details">
+      Contraste: --<br>Nitidez: --
+    </div>
+    <div class="lm-hint">Mové el celular hasta que el círculo esté VERDE</div>
+  </div>
+  <div class="flash" id="flash"></div>
+</div>
+
+<!-- Mode bar -->
+<div class="mode-bar">
+  <button class="mode-btn active" id="mode-manual" onclick="setMode('manual')">MANUAL</button>
+  <button class="mode-btn" id="mode-auto" onclick="setMode('auto')">AUTO</button>
+  <button class="mode-btn" id="mode-burst" onclick="setMode('burst')">RÁFAGA</button>
+  <button class="mode-btn" id="mode-light" onclick="setMode('light')">LUZ</button>
+  <button class="mode-btn" id="mode-gallery" onclick="openGallery()">GALERÍA (<span id="gal-count">0</span>)</button>
+  <span style="flex:1"></span>
+  <button class="mode-btn save-toggle" id="save-toggle" onclick="toggleSaveMode()">OFFLINE</button>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <div class="ctrl-side">
+    <span class="count" id="capture-count">0</span>
+    <span class="label">capturadas</span>
+  </div>
+  <div>
+    <div class="burst-config" id="burst-config">
+      <span>Cada</span>
+      <select id="burst-interval" onchange="updateBurstInterval()">
+        <option value="3">3s</option>
+        <option value="5" selected>5s</option>
+        <option value="8">8s</option>
+        <option value="10">10s</option>
+      </select>
+      <span>desde pág</span>
+      <input type="number" id="burst-start" value="1" min="1" max="300"
+        style="width:50px;background:var(--surface2);color:var(--text);border:1px solid #444;border-radius:4px;padding:4px;font-size:13px;text-align:center">
+      <span class="burst-timer" id="burst-timer"></span>
+    </div>
+  </div>
+  <button class="capture-btn" id="capture-btn" onclick="onCaptureBtn()"></button>
+</div>
+
+<!-- Preview modal -->
+<div class="preview-modal" id="preview-modal">
+  <div class="preview-img"><img id="preview-img" src=""></div>
+  <div style="text-align:center;padding:8px;font-size:14px">
+    Página: <strong id="preview-page">--</strong> | <span id="preview-quality"></span>
+  </div>
+  <div class="preview-actions">
+    <button class="preview-btn btn-discard" onclick="discardCapture()">Descartar</button>
+    <button class="preview-btn btn-save" onclick="saveCapture()">Guardar</button>
+  </div>
+</div>
+
+<!-- Gallery modal -->
+<div class="gallery-modal" id="gallery-modal">
+  <div class="gallery-header">
+    <h2>Galería de sesión</h2>
+    <button class="gallery-close" onclick="closeGallery()">&times;</button>
+  </div>
+  <div class="gallery-grid" id="gallery-grid"></div>
+  <div class="gallery-actions">
+    <button class="gallery-btn btn-red" onclick="deleteSelected()">Eliminar selec.</button>
+    <button class="gallery-btn btn-blue" onclick="closeGallery()">Volver</button>
+  </div>
+</div>
+
+<div class="upload-indicator" id="upload-ind"><span class="spinner"></span> <span id="upload-text">Subiendo...</span></div>
+<div class="toast" id="toast"></div>
+
+<canvas id="canvas-full"></canvas>
+<canvas id="canvas-analysis"></canvas>
+<canvas id="canvas-roi"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script>
+// ============================================================
+// FIREBASE STORAGE
+// ============================================================
+const firebaseApp = firebase.initializeApp({
+  apiKey: "AIzaSyDeGyMnTg2ICElfv1YALmW5Ky9-VMEfqog",
+  authDomain: "suteba-2026.firebaseapp.com",
+  projectId: "suteba-2026",
+  storageBucket: "suteba-2026.firebasestorage.app",
+  messagingSenderId: "440127524100",
+  appId: "1:440127524100:web:dbcf54bc66fb9897795451"
+});
+const storage = firebase.storage();
+const STORAGE_PATH = 'capturas';
+
+// Save mode: 'offline' | 'online'
+let saveMode = localStorage.getItem('captura-save-mode') || 'offline';
+let uploadsInFlight = 0;
+
+function initSaveToggle() {
+  const btn = document.getElementById('save-toggle');
+  btn.textContent = saveMode.toUpperCase();
+  btn.className = 'mode-btn save-toggle ' + saveMode;
+}
+
+function toggleSaveMode() {
+  saveMode = saveMode === 'offline' ? 'online' : 'offline';
+  localStorage.setItem('captura-save-mode', saveMode);
+  const btn = document.getElementById('save-toggle');
+  btn.textContent = saveMode.toUpperCase();
+  btn.className = 'mode-btn save-toggle ' + saveMode;
+  showToast(saveMode === 'online' ? 'Modo ONLINE: sube a la nube' : 'Modo OFFLINE: guarda en teléfono');
+}
+
+function uploadToStorage(blob, filename) {
+  const ind = document.getElementById('upload-ind');
+  const txt = document.getElementById('upload-text');
+  uploadsInFlight++;
+  ind.className = 'upload-indicator visible';
+  txt.textContent = uploadsInFlight > 1 ? `Subiendo ${uploadsInFlight}...` : 'Subiendo...';
+
+  const ref = storage.ref().child(`${STORAGE_PATH}/${filename}`);
+  const task = ref.put(blob, { contentType: 'image/jpeg' });
+
+  task.then(() => {
+    uploadsInFlight--;
+    if (uploadsInFlight <= 0) {
+      uploadsInFlight = 0;
+      ind.className = 'upload-indicator visible success';
+      txt.textContent = 'Subida OK';
+      setTimeout(() => ind.classList.remove('visible'), 1200);
+    } else {
+      txt.textContent = `Subiendo ${uploadsInFlight}...`;
+    }
+  }).catch((err) => {
+    uploadsInFlight--;
+    console.error('Upload error:', err);
+    ind.className = 'upload-indicator visible error';
+    txt.textContent = 'Error al subir';
+    setTimeout(() => ind.classList.remove('visible'), 2500);
+    // Fallback: download locally so the photo is not lost
+    downloadBlob(blob, filename);
+    showToast('Error red → guardado local');
+  });
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+}
+
+function saveBlobByMode(blob, filename) {
+  if (saveMode === 'online') {
+    uploadToStorage(blob, filename);
+  } else {
+    downloadBlob(blob, filename);
+  }
+}
+
+// ============================================================
+// STATE
+// ============================================================
+const video = document.getElementById('video');
+let stream = null;
+let worker = null;
+
+// Mode: manual | auto | burst | light
+let currentMode = 'manual';
+
+// Quality state
+let lastQuality = { brightness: 0, contrast: 0, sharpness: 0, allGood: false };
+
+// Auto-capture state
+let qualityGoodSince = 0;
+let autoCooldown = 0;
+const AUTO_STABLE_MS = 1000;
+const AUTO_COOLDOWN_MS = 2500;
+
+// Burst state
+let burstActive = false;
+let burstTimer = null;
+let burstIntervalSec = 5;
+let burstSeqNum = 1;
+let burstCountdown = 0;
+let burstCountdownTimer = null;
+
+// Page detection
+let detectedPage = null;
+
+// Captures
+let captureCount = 0;
+let capturedPages = new Set();
+let gallery = []; // [{url, pageNum, filename, blob}]
+
+// Audio context for beeps
+let audioCtx = null;
+function beep(freq, duration) {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.frequency.value = freq;
+  gain.gain.value = 0.15;
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration / 1000);
+}
+
+const THRESH = {
+  brightness: { good: 120, warn: 80 },
+  contrast: { good: 45, warn: 25 },
+  sharpness: { good: 100, warn: 40 },
+};
+
+// ============================================================
+// CAMERA
+// ============================================================
+async function initCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 4096 }, height: { ideal: 3072 } },
+      audio: false,
+    });
+    video.srcObject = stream;
+    await video.play();
+    setInterval(analyzeFrame, 500);
+    initOCR();
+  } catch (err) {
+    alert('No se pudo acceder a la cámara: ' + err.message);
+  }
+}
+
+// ============================================================
+// QUALITY ANALYSIS
+// ============================================================
+function analyzeFrame() {
+  if (!video.videoWidth) return;
+  const canvas = document.getElementById('canvas-analysis');
+  const scale = 0.15;
+  const w = Math.round(video.videoWidth * scale);
+  const h = Math.round(video.videoHeight * scale);
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(video, 0, 0, w, h);
+  const px = ctx.getImageData(0, 0, w, h).data;
+  const n = w * h;
+
+  let sum = 0, sumSq = 0;
+  const gray = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const g = px[i*4]*0.299 + px[i*4+1]*0.587 + px[i*4+2]*0.114;
+    gray[i] = g; sum += g; sumSq += g*g;
+  }
+  const mean = sum / n;
+  const std = Math.sqrt(Math.max(0, sumSq/n - mean*mean));
+
+  let lapS = 0, lapSq = 0, lapN = 0;
+  for (let y = 1; y < h-1; y++) for (let x = 1; x < w-1; x++) {
+    const i = y*w+x;
+    const l = -4*gray[i] + gray[i-1] + gray[i+1] + gray[i-w] + gray[i+w];
+    lapS += l; lapSq += l*l; lapN++;
+  }
+  const lapVar = lapSq/lapN - (lapS/lapN)**2;
+
+  // Update badges
+  updateQ('q-luz', mean, THRESH.brightness);
+  updateQ('q-contraste', std, THRESH.contrast);
+  updateQ('q-nitidez', lapVar, THRESH.sharpness);
+
+  const allGood = mean >= THRESH.brightness.good && std >= THRESH.contrast.good && lapVar >= THRESH.sharpness.good;
+  const anyBad = mean < THRESH.brightness.warn || std < THRESH.contrast.warn || lapVar < THRESH.sharpness.warn;
+
+  lastQuality = { brightness: mean, contrast: std, sharpness: lapVar, allGood };
+
+  const frame = document.getElementById('guide-frame');
+  const gen = document.getElementById('q-general');
+  frame.className = 'guide-frame ' + (allGood ? 'q-good' : anyBad ? 'q-bad' : 'q-warn');
+  gen.className = 'q-badge ' + (allGood ? 'q-good' : anyBad ? 'q-bad' : 'q-warn');
+
+  // Audio feedback: beep when quality changes
+  if (currentMode !== 'light') {
+    if (allGood && !lastQuality._wasGood) beep(880, 80);
+    else if (anyBad && lastQuality._wasGood) beep(220, 150);
+  }
+  lastQuality._wasGood = allGood;
+
+  // Light meter
+  if (currentMode === 'light') updateLightMeter(mean, std, lapVar);
+
+  // Auto-capture
+  if (currentMode === 'auto') {
+    const ring = document.getElementById('auto-ring');
+    const ringFg = document.getElementById('ring-fg');
+    const now = Date.now();
+    if (allGood && detectedPage && !capturedPages.has(detectedPage) && now > autoCooldown) {
+      if (!qualityGoodSince) qualityGoodSince = now;
+      const progress = Math.min((now - qualityGoodSince) / AUTO_STABLE_MS, 1);
+      ring.classList.add('visible');
+      ringFg.style.strokeDashoffset = 150.8 * (1 - progress);
+      if (progress >= 1) { ring.classList.remove('visible'); fireCapture(detectedPage); autoCooldown = now + AUTO_COOLDOWN_MS; qualityGoodSince = 0; }
+    } else {
+      qualityGoodSince = 0;
+      ring.classList.remove('visible');
+      ringFg.style.strokeDashoffset = 150.8;
+    }
+  }
+}
+
+function updateQ(id, val, t) {
+  document.getElementById(id).className = 'q-badge ' + (val >= t.good ? 'q-good' : val >= t.warn ? 'q-warn' : 'q-bad');
+}
+
+// ============================================================
+// LIGHT METER
+// ============================================================
+function updateLightMeter(brightness, contrast, sharpness) {
+  const circle = document.getElementById('lm-circle');
+  const val = document.getElementById('lm-value');
+  const det = document.getElementById('lm-details');
+  val.textContent = Math.round(brightness);
+
+  const bGood = brightness >= THRESH.brightness.good;
+  const cGood = contrast >= THRESH.contrast.good;
+  const sGood = sharpness >= THRESH.sharpness.good;
+  const allGood = bGood && cGood && sGood;
+  const anyBad = brightness < THRESH.brightness.warn || contrast < THRESH.contrast.warn || sharpness < THRESH.sharpness.warn;
+
+  circle.className = 'lm-circle ' + (allGood ? 'good' : anyBad ? 'bad' : 'warn');
+  val.style.color = allGood ? 'var(--green)' : anyBad ? 'var(--red)' : 'var(--yellow)';
+
+  const badge = (v, t) => v >= t.good ? '✓' : v >= t.warn ? '~' : '✗';
+  det.innerHTML = `Contraste: ${Math.round(contrast)} ${badge(contrast, THRESH.contrast)}<br>Nitidez: ${Math.round(sharpness)} ${badge(sharpness, THRESH.sharpness)}`;
+}
+
+// ============================================================
+// OCR PAGE NUMBER
+// ============================================================
+async function initOCR() {
+  worker = await Tesseract.createWorker('spa', 1, { logger: () => {} });
+  await worker.setParameters({
+    tessedit_char_whitelist: '0123456789PpáÁgGiInaNA ',
+    tessedit_pageseg_mode: '7',
+  });
+  setInterval(ocrPageNumber, 2000);
+}
+
+async function ocrPageNumber() {
+  if (!video.videoWidth || !worker) return;
+  const canvas = document.getElementById('canvas-roi');
+  const srcX = Math.round(video.videoWidth * 0.75);
+  const srcY = Math.round(video.videoHeight * 0.88);
+  const srcW = Math.round(video.videoWidth * 0.25);
+  const srcH = Math.round(video.videoHeight * 0.12);
+  canvas.width = srcW; canvas.height = srcH;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+  const imgData = ctx.getImageData(0, 0, srcW, srcH);
+  const px = imgData.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const g = px[i]*0.299 + px[i+1]*0.587 + px[i+2]*0.114;
+    px[i] = px[i+1] = px[i+2] = g < 128 ? 0 : 255;
+  }
+  ctx.putImageData(imgData, 0, 0);
+  try {
+    const { data } = await worker.recognize(canvas);
+    const m = data.text.trim().match(/(\d{1,3})/);
+    if (m && +m[1] > 0 && +m[1] <= 300) {
+      detectedPage = +m[1];
+      const el = document.getElementById('page-num');
+      el.textContent = detectedPage; el.className = 'page-num detected';
+    } else {
+      document.getElementById('page-num').textContent = '--';
+      document.getElementById('page-num').className = 'page-num';
+    }
+  } catch(e) {}
+}
+
+// ============================================================
+// MODE SWITCHING
+// ============================================================
+function setMode(mode) {
+  // Cleanup previous mode
+  if (currentMode === 'burst' && burstActive) stopBurst();
+  if (currentMode === 'light') document.getElementById('light-meter').classList.remove('visible');
+
+  currentMode = mode;
+
+  // Update mode buttons
+  document.querySelectorAll('.mode-btn').forEach(b => b.className = 'mode-btn');
+  const btn = document.getElementById('mode-' + mode);
+  if (btn) btn.className = 'mode-btn ' + (mode === 'burst' ? 'active-green' : 'active');
+
+  // Show/hide burst config
+  document.getElementById('burst-config').classList.toggle('visible', mode === 'burst');
+
+  // Light meter
+  if (mode === 'light') document.getElementById('light-meter').classList.add('visible');
+
+  // Capture button style
+  document.getElementById('capture-btn').className = 'capture-btn';
+}
+
+// ============================================================
+// CAPTURE (common)
+// ============================================================
+function fireCapture(pageNum) {
+  if (!video.videoWidth) return;
+
+  // Flash + vibrate + beep
+  const flash = document.getElementById('flash');
+  flash.classList.add('active');
+  setTimeout(() => flash.classList.remove('active'), 120);
+  if (navigator.vibrate) navigator.vibrate(80);
+  beep(660, 60);
+
+  const canvas = document.getElementById('canvas-full');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+
+  canvas.toBlob((blob) => {
+    const pageStr = pageNum ? String(pageNum).padStart(4, '0') : 'XXXX';
+    const filename = `pag_${pageStr}.jpg`;
+
+    // Save by mode (online or offline)
+    saveBlobByMode(blob, filename);
+
+    // Gallery
+    const url = URL.createObjectURL(blob);
+    gallery.push({ url, pageNum, filename, blob });
+    document.getElementById('gal-count').textContent = gallery.length;
+
+    // Track
+    if (pageNum) capturedPages.add(pageNum);
+    captureCount++;
+    document.getElementById('capture-count').textContent = captureCount;
+
+    showToast(`Pág ${pageNum || '?'}` + (saveMode === 'online' ? ' ☁' : ''));
+  }, 'image/jpeg', 0.95);
+}
+
+function onCaptureBtn() {
+  if (currentMode === 'burst') {
+    burstActive ? stopBurst() : startBurst();
+  } else if (currentMode === 'light') {
+    // Exit light meter
+    setMode('manual');
+  } else {
+    // Manual or auto: manual capture with preview
+    manualCapture();
+  }
+}
+
+// ============================================================
+// MANUAL CAPTURE (with preview)
+// ============================================================
+let capturedBlob = null, capturedPageNum = null;
+
+function manualCapture() {
+  if (!video.videoWidth) return;
+  const flash = document.getElementById('flash');
+  flash.classList.add('active');
+  setTimeout(() => flash.classList.remove('active'), 120);
+  beep(660, 60);
+
+  const canvas = document.getElementById('canvas-full');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+
+  canvas.toBlob((blob) => {
+    capturedBlob = blob;
+    capturedPageNum = detectedPage;
+    document.getElementById('preview-img').src = URL.createObjectURL(blob);
+    document.getElementById('preview-page').textContent = capturedPageNum || 'No detectada';
+    const qText = lastQuality.allGood ? 'BUENA' : 'REGULAR';
+    const qColor = lastQuality.allGood ? 'var(--green)' : 'var(--yellow)';
+    document.getElementById('preview-quality').innerHTML = `Calidad: <span style="color:${qColor};font-weight:700">${qText}</span>`;
+    document.getElementById('preview-modal').classList.add('visible');
+  }, 'image/jpeg', 0.95);
+}
+
+function discardCapture() {
+  capturedBlob = null;
+  document.getElementById('preview-modal').classList.remove('visible');
+}
+
+function saveCapture() {
+  if (!capturedBlob) return;
+  const pageStr = capturedPageNum ? String(capturedPageNum).padStart(4, '0') : 'XXXX';
+  const filename = `pag_${pageStr}.jpg`;
+
+  // Save by mode
+  saveBlobByMode(capturedBlob, filename);
+
+  const url = URL.createObjectURL(capturedBlob);
+  gallery.push({ url, pageNum: capturedPageNum, filename, blob: capturedBlob });
+  document.getElementById('gal-count').textContent = gallery.length;
+  if (capturedPageNum) capturedPages.add(capturedPageNum);
+  captureCount++;
+  document.getElementById('capture-count').textContent = captureCount;
+  document.getElementById('preview-modal').classList.remove('visible');
+  capturedBlob = null;
+  showToast(`Guardada: ${filename}` + (saveMode === 'online' ? ' ☁' : ''));
+}
+
+// ============================================================
+// BURST MODE
+// ============================================================
+function updateBurstInterval() {
+  burstIntervalSec = parseInt(document.getElementById('burst-interval').value);
+}
+
+function startBurst() {
+  burstActive = true;
+  burstSeqNum = parseInt(document.getElementById('burst-start').value) || 1;
+  burstIntervalSec = parseInt(document.getElementById('burst-interval').value);
+  document.getElementById('capture-btn').classList.add('burst');
+  showToast(`Ráfaga: cada ${burstIntervalSec}s desde pág ${burstSeqNum}`);
+
+  // First capture immediately
+  fireBurstCapture();
+
+  // Then interval
+  burstCountdown = burstIntervalSec;
+  burstCountdownTimer = setInterval(() => {
+    burstCountdown--;
+    document.getElementById('burst-timer').textContent = burstCountdown;
+    // Beep last 2 seconds
+    if (burstCountdown <= 2 && burstCountdown > 0) beep(440, 60);
+    if (burstCountdown <= 0) {
+      fireBurstCapture();
+      burstCountdown = burstIntervalSec;
+    }
+  }, 1000);
+}
+
+function fireBurstCapture() {
+  fireCapture(burstSeqNum);
+  document.getElementById('burst-start').value = burstSeqNum + 1;
+  burstSeqNum++;
+}
+
+function stopBurst() {
+  burstActive = false;
+  clearInterval(burstCountdownTimer);
+  burstCountdownTimer = null;
+  document.getElementById('capture-btn').classList.remove('burst');
+  document.getElementById('burst-timer').textContent = '';
+  showToast('Ráfaga detenida');
+}
+
+// ============================================================
+// GALLERY
+// ============================================================
+function openGallery() {
+  const grid = document.getElementById('gallery-grid');
+  if (gallery.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#666">Sin capturas en esta sesión</div>';
+  } else {
+    grid.innerHTML = gallery.map((g, i) => `
+      <div class="gallery-item" data-idx="${i}" onclick="toggleGallerySelect(this)">
+        <img src="${g.url}" alt="${g.filename}">
+        <div class="gi-label">${g.filename}</div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('gallery-modal').classList.add('visible');
+}
+
+function closeGallery() {
+  document.getElementById('gallery-modal').classList.remove('visible');
+}
+
+function toggleGallerySelect(el) {
+  el.classList.toggle('selected');
+}
+
+function deleteSelected() {
+  const selected = document.querySelectorAll('.gallery-item.selected');
+  if (selected.length === 0) return;
+  if (!confirm(`Eliminar ${selected.length} foto(s)?`)) return;
+
+  const idxs = Array.from(selected).map(el => parseInt(el.dataset.idx)).sort((a,b) => b-a);
+  for (const idx of idxs) {
+    const item = gallery[idx];
+    if (item.pageNum) capturedPages.delete(item.pageNum);
+    URL.revokeObjectURL(item.url);
+    gallery.splice(idx, 1);
+    captureCount--;
+  }
+  document.getElementById('capture-count').textContent = Math.max(0, captureCount);
+  document.getElementById('gal-count').textContent = gallery.length;
+  openGallery(); // Refresh
+  showToast(`${idxs.length} eliminada(s)`);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 1200);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+initSaveToggle();
+initCamera();
+</script>
+</body>
+</html>

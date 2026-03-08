@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Padron Provisorio SUTEBA 2026 - Revision OCR</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --orange: #f97316;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface2);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+    header h1 span { color: var(--accent); }
+
+    .stats {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .stats strong { color: var(--text); }
+
+    .page-list {
+      display: flex;
+      gap: 0.4rem;
+      padding: 0.75rem 1.5rem;
+      overflow-x: auto;
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface2);
+    }
+
+    .page-btn {
+      padding: 0.4rem 0.75rem;
+      border: 2px solid var(--surface2);
+      border-radius: 0.5rem;
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      min-width: 70px;
+    }
+
+    .page-btn:hover { border-color: var(--accent); }
+    .page-btn.active { border-color: var(--accent); background: var(--accent); color: white; }
+
+    .page-btn .quality-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      padding: 0.75rem 1.5rem;
+      height: calc(100vh - 120px);
+    }
+
+    .panel {
+      background: var(--surface);
+      border-radius: 0.75rem;
+      border: 1px solid var(--surface2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      padding: 0.5rem 1rem;
+      background: var(--surface2);
+      font-weight: 600;
+      font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow: auto;
+      padding: 0;
+    }
+
+    .panel-body img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .toggle-btns { display: flex; gap: 0.25rem; }
+
+    .toggle-btn {
+      padding: 0.2rem 0.5rem;
+      border: 1px solid var(--surface2);
+      background: none;
+      color: var(--text-muted);
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 0.7rem;
+    }
+
+    .toggle-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    /* Quality summary bar */
+    .quality-summary {
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--surface2);
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.75rem;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .quality-summary .metric {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .quality-summary .metric .val {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .quality-summary .metric .lbl {
+      color: var(--text-muted);
+      font-size: 0.65rem;
+    }
+
+    .quality-bar-wrap {
+      flex: 1;
+      height: 6px;
+      background: var(--bg);
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid var(--surface2);
+    }
+    .quality-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    /* Tabla de registros */
+    .registros-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+    }
+
+    .registros-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .registros-table th {
+      background: var(--surface2);
+      padding: 0.5rem 0.6rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .registros-table td {
+      padding: 0.35rem 0.6rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .registros-table tr:hover td {
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .registros-table .dni {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .registros-table .escuela {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.7rem;
+    }
+
+    .registros-table .escuela.jubilado { color: var(--yellow); }
+    .registros-table .escuela.sede { color: var(--orange); }
+    .registros-table .escuela.codigo { color: var(--green); }
+    .registros-table .escuela.vacio { color: var(--red); opacity: 0.4; }
+
+    .registros-table .row-num {
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      text-align: right;
+      width: 25px;
+    }
+
+    /* OCR text view */
+    .ocr-text {
+      padding: 0.75rem;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.65rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: var(--text-muted);
+    }
+
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      font-size: 1rem;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .empty-state .warn { color: var(--red); font-weight: 600; }
+
+    .badge-mala {
+      background: var(--red);
+      color: white;
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.75rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+
+    .badge-buena {
+      background: var(--green);
+      color: white;
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.75rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+
+    .badge-regular {
+      background: var(--yellow);
+      color: black;
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.75rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+      .main-content {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .panel { min-height: 400px; }
+    }
+
+    /* Keyboard hint */
+    .kbd {
+      background: var(--surface2);
+      border: 1px solid var(--text-muted);
+      border-radius: 3px;
+      padding: 0 4px;
+      font-size: 0.65rem;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><span>SUTEBA 2026</span> | Revision Padron Provisorio</h1>
+    <div class="stats">
+      <span>Paginas: <strong id="total-pages">0</strong></span>
+      <span>Registros: <strong id="total-regs">0</strong></span>
+      <span><span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> navegar</span>
+    </div>
+  </header>
+
+  <nav class="page-list" id="page-list"></nav>
+
+  <main class="main-content">
+    <div class="panel" id="panel-imagen">
+      <div class="panel-header">
+        <span id="img-title">Imagen</span>
+        <div class="toggle-btns">
+          <button class="toggle-btn active" data-view="original" onclick="toggleView('original')">Original</button>
+          <button class="toggle-btn" data-view="procesada" onclick="toggleView('procesada')">Procesada</button>
+        </div>
+      </div>
+      <div class="panel-body" id="imagen-body">
+        <div class="empty-state">Selecciona una pagina</div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-datos">
+      <div class="panel-header">
+        <span id="datos-title">Datos extraidos</span>
+        <div class="toggle-btns">
+          <button class="toggle-btn active" data-right="tabla" onclick="toggleRight('tabla')">Tabla</button>
+          <button class="toggle-btn" data-right="ocr" onclick="toggleRight('ocr')">OCR Raw</button>
+        </div>
+      </div>
+      <div class="quality-summary" id="quality-summary"></div>
+      <div class="panel-body" id="datos-body">
+        <div class="empty-state">Selecciona una pagina</div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let paginas = [];
+    let paginaActual = null;
+    let vistaImg = 'original';
+    let vistaRight = 'tabla';
+
+    function getQualityColor(score) {
+      if (score >= 50) return 'var(--green)';
+      if (score >= 25) return 'var(--yellow)';
+      return 'var(--red)';
+    }
+
+    function getCalidadBadge(score) {
+      if (score >= 50) return '<span class="badge-buena">BUENA</span>';
+      if (score >= 25) return '<span class="badge-regular">REGULAR</span>';
+      return '<span class="badge-mala">RE-FOTO</span>';
+    }
+
+    function getEscuela(r) {
+      return r.ESCUELA || r.DESTINO || '';
+    }
+
+    function escuelaClass(esc) {
+      if (!esc) return 'vacio';
+      if (esc.includes('JUBILADO')) return 'jubilado';
+      if (esc.includes('SEDE')) return 'sede';
+      return 'codigo';
+    }
+
+    function renderPageList() {
+      const list = document.getElementById('page-list');
+      list.innerHTML = paginas.map(p => `
+        <button class="page-btn ${paginaActual?.id === p.id ? 'active' : ''}"
+                onclick="seleccionarPagina('${p.id}')">
+          <div class="quality-dot" style="background:${getQualityColor(p.calidad)}"></div>
+          <span>Pag ${p.numero}</span>
+          <span style="font-size:0.65rem;color:var(--text-muted)">${p.detalles.registros_extraidos}/${p.detalles.esperados}</span>
+        </button>
+      `).join('');
+    }
+
+    function renderImagen() {
+      const body = document.getElementById('imagen-body');
+      const title = document.getElementById('img-title');
+      if (!paginaActual) {
+        body.innerHTML = '<div class="empty-state">Selecciona una pagina</div>';
+        return;
+      }
+      const src = vistaImg === 'original' ? paginaActual.foto : paginaActual.procesada;
+      title.textContent = `Pagina ${paginaActual.numero} - ${vistaImg === 'original' ? 'Original' : 'Procesada'}`;
+      if (src) {
+        body.innerHTML = `<img src="${src}" alt="Pagina ${paginaActual.numero}">`;
+      } else {
+        body.innerHTML = '<div class="empty-state">Sin imagen</div>';
+      }
+    }
+
+    function renderDatos() {
+      const body = document.getElementById('datos-body');
+      const summary = document.getElementById('quality-summary');
+      const title = document.getElementById('datos-title');
+
+      if (!paginaActual) {
+        body.innerHTML = '<div class="empty-state">Selecciona una pagina</div>';
+        summary.innerHTML = '';
+        return;
+      }
+
+      const d = paginaActual.detalles;
+      const regs = paginaActual.registros || [];
+      const color = getQualityColor(paginaActual.calidad);
+
+      summary.innerHTML = `
+        <div class="metric">
+          <div class="val" style="color:${color}">${d.registros_extraidos}</div>
+          <div class="lbl">Registros</div>
+        </div>
+        <div class="metric">
+          <div class="val" style="color:var(--green)">${d.escuelas_detectadas}</div>
+          <div class="lbl">Con escuela</div>
+        </div>
+        <div class="metric">
+          <div class="val">${d.esperados}</div>
+          <div class="lbl">Esperados</div>
+        </div>
+        <div class="quality-bar-wrap">
+          <div class="quality-bar-fill" style="width:${paginaActual.calidad}%;background:${color}"></div>
+        </div>
+        ${getCalidadBadge(paginaActual.calidad)}
+      `;
+
+      if (vistaRight === 'tabla') {
+        title.textContent = `Datos extraidos - ${regs.length} registros`;
+        if (regs.length === 0) {
+          body.innerHTML = `<div class="empty-state">
+            <span class="warn">0 registros extraidos</span>
+            <span>Esta pagina necesita re-fotografiarse con mejor iluminacion</span>
+          </div>`;
+          return;
+        }
+        let html = `<table class="registros-table">
+          <thead><tr>
+            <th>#</th><th>TIPO</th><th>DNI</th><th>APELLIDO Y NOMBRE</th><th>ESCUELA</th><th>OBS</th>
+          </tr></thead><tbody>`;
+
+        regs.forEach((r, i) => {
+          const esc = getEscuela(r);
+          const cls = escuelaClass(esc);
+          const escText = esc || '-';
+          const tipo = r.TIPO || 'DNI';
+          const obs = r.OBSERVACION || '';
+          html += `<tr>
+            <td class="row-num">${i + 1}</td>
+            <td style="font-size:0.65rem;color:var(--text-muted)">${tipo}</td>
+            <td class="dni">${r.DNI}</td>
+            <td>${r.APELLIDO_NOMBRE}</td>
+            <td class="escuela ${cls}">${escText}</td>
+            <td style="font-size:0.6rem;color:var(--orange);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="${obs}">${obs}</td>
+          </tr>`;
+        });
+
+        html += '</tbody></table>';
+        body.innerHTML = html;
+      } else {
+        title.textContent = `OCR Raw - Pagina ${paginaActual.numero}`;
+        const escaped = (paginaActual.ocr || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        body.innerHTML = `<div class="ocr-text">${escaped}</div>`;
+      }
+    }
+
+    function seleccionarPagina(id) {
+      paginaActual = paginas.find(p => p.id === id);
+      renderPageList();
+      renderImagen();
+      renderDatos();
+    }
+
+    function toggleView(view) {
+      vistaImg = view;
+      document.querySelectorAll('[data-view]').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === view);
+      });
+      renderImagen();
+    }
+
+    function toggleRight(view) {
+      vistaRight = view;
+      document.querySelectorAll('[data-right]').forEach(b => {
+        b.classList.toggle('active', b.dataset.right === view);
+      });
+      renderDatos();
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', e => {
+      if (!paginas.length) return;
+      const idx = paginas.findIndex(p => p.id === paginaActual?.id);
+      if (e.key === 'ArrowLeft' && idx > 0) {
+        seleccionarPagina(paginas[idx - 1].id);
+      } else if (e.key === 'ArrowRight' && idx < paginas.length - 1) {
+        seleccionarPagina(paginas[idx + 1].id);
+      }
+    });
+
+    async function init() {
+      const res = await fetch('data/paginas.json');
+      paginas = await res.json();
+
+      document.getElementById('total-pages').textContent = paginas.length;
+      const totalRegs = paginas.reduce((s, p) => s + (p.registros?.length || 0), 0);
+      document.getElementById('total-regs').textContent = totalRegs;
+
+      renderPageList();
+      if (paginas.length > 0) {
+        seleccionarPagina(paginas[0].id);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

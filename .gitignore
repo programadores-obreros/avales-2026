@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Imágenes y archivos pesados
+*.pdf
+*.xls
+*.xlsx
+fotos/
+procesado/
+pages_raw/
+pages_crop/
+test_estrategias/
+
+# Firebase
+**/node_modules/
+**/.firebase/
+**/firebase-debug.log
+
+# Datos procesados (regenerables)
+**/data/procesadas/
+**/data/control.json
+**/preproduccion/*.json
+**/preproduccion/*.csv
+**/preproduccion/paginas_hash/
+**/preproduccion/paginas_ok/
+
+# Output OCR
+output/
+output_claude/
+
+# Datos JSON grandes
+**/public/data/*.json
+**/public/comparison.json
+**/public/data.json
+
+# Otros
+.gestor/
+sesion_*.txt
+
+# Lock files
+**/package-lock.json

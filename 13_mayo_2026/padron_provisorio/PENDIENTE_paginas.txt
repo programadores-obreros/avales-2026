@@ -1,0 +1,35 @@
+PAGINAS CON NUMERO INCORRECTO (hash fallback) - QUINTO LOTE
+============================================================
+Revisar foto, leer numero de pagina real (abajo a la derecha),
+y renombrar archivos en procesado/ (pag_XXXX_datos.csv, _ocr.txt, _procesada.png)
+
+Archivo foto                        -> Pagina asignada (INCORRECTA)
+--------------------------------------------------------------------
+IMG_20260306_174025253.jpg          -> pag_1801 (hash)
+IMG_20260306_174026973.jpg          -> pag_3738 (hash)
+IMG_20260306_174028981.jpg          -> pag_0080 (duplicada con otra foto)
+IMG_20260306_174031215.jpg          -> pag_9385 (hash)
+IMG_20260306_174047553.jpg          -> pag_2551 (hash)
+IMG_20260306_174051116.jpg          -> pag_0008 (sospechoso)
+IMG_20260306_174053049.jpg          -> pag_3929 (hash)
+IMG_20260306_174055300.jpg          -> pag_2447 (hash)
+IMG_20260306_174102592.jpg          -> pag_1411 (hash)
+IMG_20260306_174106012.jpg          -> pag_5194 (hash)
+IMG_20260306_174107943.jpg          -> pag_0148 (duplicada con lote anterior)
+
+PAGINAS QUE PARECEN CORRECTAS:
+IMG_20260306_174006839.jpg          -> pag_0075
+IMG_20260306_174008778.jpg          -> pag_0076 (reprocesada)
+IMG_20260306_174010476.jpg          -> pag_0080
+IMG_20260306_174019586.jpg          -> pag_0085
+IMG_20260306_174021691.jpg          -> pag_0086
+IMG_20260306_174023284.jpg          -> pag_0087
+IMG_20260306_174034650.jpg          -> pag_0092
+IMG_20260306_174037905.jpg          -> pag_0093
+IMG_20260306_174040098.jpg          -> pag_0094
+IMG_20260306_174041877.jpg          -> pag_0096
+IMG_20260306_174044326.jpg          -> pag_0148 (sospechoso, revisar)
+IMG_20260306_174045799.jpg          -> pag_0097
+IMG_20260306_174057065.jpg          -> pag_0098
+IMG_20260306_174104354.jpg          -> pag_0107
+IMG_20260306_174111180.jpg          -> pag_0111
