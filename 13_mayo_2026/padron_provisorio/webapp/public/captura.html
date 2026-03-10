@@ -452,8 +452,8 @@ function uploadToStorage(blob, filename) {
     ind.className = 'upload-indicator visible error';
     txt.textContent = 'Error al subir';
     setTimeout(() => ind.classList.remove('visible'), 2500);
-    // Fallback: download locally so the photo is not lost
-    downloadBlob(blob, filename);
+    // Fallback: share/download locally so the photo is not lost
+    shareOrDownload(blob, filename);
     showToast('Error red → guardado local');
   });
 }
@@ -464,11 +464,25 @@ function downloadBlob(blob, filename) {
   a.href = url; a.download = filename; a.click();
 }
 
+async function shareOrDownload(blob, filename) {
+  const file = new File([blob], filename, { type: 'image/jpeg' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: filename });
+    } catch (e) {
+      // User cancelled share — not an error
+      if (e.name !== 'AbortError') downloadBlob(blob, filename);
+    }
+  } else {
+    downloadBlob(blob, filename);
+  }
+}
+
 function saveBlobByMode(blob, filename) {
   if (saveMode === 'online') {
     uploadToStorage(blob, filename);
   } else {
-    downloadBlob(blob, filename);
+    shareOrDownload(blob, filename);
   }
 }
 
@@ -507,18 +521,9 @@ let captureCount = 0;
 let capturedPages = new Set();
 let gallery = []; // [{url, pageNum, filename, blob}]
 
-// Audio context for beeps
-let audioCtx = null;
-function beep(freq, duration) {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.frequency.value = freq;
-  gain.gain.value = 0.15;
-  osc.start();
-  osc.stop(audioCtx.currentTime + duration / 1000);
+// Haptic feedback (replaces audio beeps)
+function vibrate(ms) {
+  if (navigator.vibrate) navigator.vibrate(ms);
 }
 
 const THRESH = {
@@ -592,10 +597,10 @@ function analyzeFrame() {
   frame.className = 'guide-frame ' + (allGood ? 'q-good' : anyBad ? 'q-bad' : 'q-warn');
   gen.className = 'q-badge ' + (allGood ? 'q-good' : anyBad ? 'q-bad' : 'q-warn');
 
-  // Audio feedback: beep when quality changes
+  // Haptic feedback when quality changes
   if (currentMode !== 'light') {
-    if (allGood && !lastQuality._wasGood) beep(880, 80);
-    else if (anyBad && lastQuality._wasGood) beep(220, 150);
+    if (allGood && !lastQuality._wasGood) vibrate(50);
+    else if (anyBad && lastQuality._wasGood) vibrate([30, 30, 30]);
   }
   lastQuality._wasGood = allGood;
 
@@ -721,12 +726,11 @@ function setMode(mode) {
 function fireCapture(pageNum) {
   if (!video.videoWidth) return;
 
-  // Flash + vibrate + beep
+  // Flash + vibrate
   const flash = document.getElementById('flash');
   flash.classList.add('active');
   setTimeout(() => flash.classList.remove('active'), 120);
-  if (navigator.vibrate) navigator.vibrate(80);
-  beep(660, 60);
+  vibrate(80);
 
   const canvas = document.getElementById('canvas-full');
   canvas.width = video.videoWidth; canvas.height = video.videoHeight;
@@ -775,7 +779,7 @@ function manualCapture() {
   const flash = document.getElementById('flash');
   flash.classList.add('active');
   setTimeout(() => flash.classList.remove('active'), 120);
-  beep(660, 60);
+  vibrate(80);
 
   const canvas = document.getElementById('canvas-full');
   canvas.width = video.videoWidth; canvas.height = video.videoHeight;
@@ -840,7 +844,7 @@ function startBurst() {
     burstCountdown--;
     document.getElementById('burst-timer').textContent = burstCountdown;
     // Beep last 2 seconds
-    if (burstCountdown <= 2 && burstCountdown > 0) beep(440, 60);
+    if (burstCountdown <= 2 && burstCountdown > 0) vibrate(40);
     if (burstCountdown <= 0) {
       fireBurstCapture();
       burstCountdown = burstIntervalSec;
