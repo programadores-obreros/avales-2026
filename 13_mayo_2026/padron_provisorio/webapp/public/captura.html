@@ -227,6 +227,7 @@
       padding: 10px 24px; border: none; border-radius: 8px;
       font-size: 14px; font-weight: 700; cursor: pointer;
     }
+    .btn-green { background: var(--green); color: white; }
     .btn-red { background: var(--red); color: white; }
     .btn-blue { background: var(--accent); color: white; }
 
@@ -377,6 +378,8 @@
   </div>
   <div class="gallery-grid" id="gallery-grid"></div>
   <div class="gallery-actions">
+    <button class="gallery-btn btn-green" onclick="downloadAllPhotos()">Guardar todas</button>
+    <button class="gallery-btn btn-blue" onclick="shareAllPhotos()">Compartir</button>
     <button class="gallery-btn btn-red" onclick="deleteSelected()">Eliminar selec.</button>
     <button class="gallery-btn btn-blue" onclick="closeGallery()">Volver</button>
   </div>
@@ -452,8 +455,8 @@ function uploadToStorage(blob, filename) {
     ind.className = 'upload-indicator visible error';
     txt.textContent = 'Error al subir';
     setTimeout(() => ind.classList.remove('visible'), 2500);
-    // Fallback: share/download locally so the photo is not lost
-    shareOrDownload(blob, filename);
+    // Fallback: download locally so the photo is not lost
+    downloadBlob(blob, filename);
     showToast('Error red → guardado local');
   });
 }
@@ -466,23 +469,26 @@ function downloadBlob(blob, filename) {
 
 async function shareOrDownload(blob, filename) {
   const file = new File([blob], filename, { type: 'image/jpeg' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  const canShare = navigator.canShare && navigator.canShare({ files: [file] });
+  if (canShare) {
     try {
-      await navigator.share({ files: [file], title: filename });
+      await navigator.share({ files: [file], title: 'SUTEBA Padrón - ' + filename });
+      showToast('Compartido ✓');
+      return;
     } catch (e) {
-      // User cancelled share — not an error
-      if (e.name !== 'AbortError') downloadBlob(blob, filename);
+      if (e.name === 'AbortError') return; // user cancelled, photo safe in gallery
     }
-  } else {
-    downloadBlob(blob, filename);
   }
+  // Fallback: direct download
+  downloadBlob(blob, filename);
+  showToast('Guardado en Descargas');
 }
 
 function saveBlobByMode(blob, filename) {
   if (saveMode === 'online') {
     uploadToStorage(blob, filename);
   } else {
-    shareOrDownload(blob, filename);
+    downloadBlob(blob, filename);
   }
 }
 
@@ -891,6 +897,26 @@ function closeGallery() {
 
 function toggleGallerySelect(el) {
   el.classList.toggle('selected');
+}
+
+async function shareAllPhotos() {
+  if (gallery.length === 0) { showToast('No hay fotos'); return; }
+  const files = gallery.map(g => new File([g.blob], g.filename, { type: 'image/jpeg' }));
+  if (navigator.canShare && navigator.canShare({ files })) {
+    try {
+      await navigator.share({ files, title: `SUTEBA Padrón - ${files.length} fotos` });
+      showToast('Compartidas ✓');
+    } catch (e) {
+      if (e.name !== 'AbortError') downloadAllPhotos();
+    }
+  } else {
+    downloadAllPhotos();
+  }
+}
+
+function downloadAllPhotos() {
+  gallery.forEach(g => downloadBlob(g.blob, g.filename));
+  showToast(`${gallery.length} fotos guardadas en Descargas`);
 }
 
 function deleteSelected() {
