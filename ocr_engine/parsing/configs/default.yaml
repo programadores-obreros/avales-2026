@@ -1,0 +1,15 @@
+# Default config — alias for _base.yaml.
+# Used when a distrito code has no specific config file.
+# Only base sanitization rules apply.
+
+distrito: null
+distrito_name: "default"
+filas_esperadas: 60
+
+codigos_escuela: []
+
+destinos_especiales:
+  - "JUBILADO/A"
+  - "AP. EN SEDE"
+
+sanitize_rules: []

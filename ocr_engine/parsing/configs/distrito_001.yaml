@@ -1,0 +1,14 @@
+# Distrito 001 — La Plata
+# Placeholder config — sanitize rules to be populated when La Plata data is processed.
+
+distrito: "001"
+distrito_name: "La Plata"
+filas_esperadas: 60
+
+codigos_escuela: []
+
+destinos_especiales:
+  - "JUBILADO/A"
+  - "AP. EN SEDE"
+
+sanitize_rules: []

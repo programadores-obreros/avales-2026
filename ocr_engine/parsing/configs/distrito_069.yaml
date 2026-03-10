@@ -1,0 +1,217 @@
+# Distrito 069 — La Matanza
+# Migrated from pradones/process_padron.py:sanitize_line()
+# 40 regex rules for OCR artifact correction specific to this distrito.
+
+distrito: "069"
+distrito_name: "La Matanza"
+filas_esperadas: 60
+
+codigos_escuela:
+  - DF
+  - DM
+  - EE
+  - FP
+  - J1
+  - JI
+  - MS
+  - MT
+  - PP
+  - AA
+  - JH
+  - RC
+  - SC
+  - DC
+  - DP
+  - IS
+  - TI
+  - TM
+  - BS
+  - EL
+  - TJ
+
+destinos_especiales:
+  - "JUBILADO/A"
+  - "AP. EN SEDE"
+  - "TITULAR"
+  - "SUPLENTE"
+
+sanitize_rules:
+  # --- Distrito number fixes ---
+  - pattern: 'D-069-'
+    replacement: '0-069-'
+    description: "D instead of 0: D-069 → 0-069"
+
+  - pattern: '0-0692-'
+    replacement: '0-069-'
+    description: "Extra digit: 0-0692 → 0-069"
+
+  - pattern: '0-D69-'
+    replacement: '0-069-'
+    description: "D in section number: 0-D69 → 0-069"
+
+  # --- Space inside codes ---
+  - pattern: '(0-069-)\s+'
+    replacement: '\1'
+    description: "Space after distrito: '0-069- MS' → '0-069-MS'"
+
+  # --- Dot/comma before code part ---
+  - pattern: '0-069-[.,](J[1I])'
+    replacement: '0-069-\1'
+    description: "Dot/comma before J1/JI: '.J1' → 'J1'"
+
+  - pattern: '0-069-[.,](\d)'
+    replacement: '0-069-\1'
+    description: "Dot/comma before digit in code"
+
+  # --- J1/JI OCR corruption fixes ---
+  - pattern: '0-069-J[|!]'
+    replacement: '0-069-J1'
+    description: "J| or J! → J1"
+
+  - pattern: '0-069-\)1'
+    replacement: '0-069-J1'
+    description: ")1 → J1"
+
+  - pattern: '0-069-[.,;]1-'
+    replacement: '0-069-J1-'
+    description: ",1- or .1- or ;1- → J1-"
+
+  - pattern: '0-069-[.,;]I-'
+    replacement: '0-069-JI-'
+    description: ",I- or .I- → JI-"
+
+  - pattern: '0-069-\.J'
+    replacement: '0-069-J'
+    description: ".J → J (dot before J)"
+
+  - pattern: '0-069-\.1-'
+    replacement: '0-069-J1-'
+    description: ".1- → J1-"
+
+  - pattern: '0-069-1-(\d{4})'
+    replacement: '0-069-J1-\1'
+    description: "Bare 1- → J1- (missing J)"
+
+  - pattern: '0-069-[,.]?\)?\[I1]-'
+    replacement: '0-069-J1-'
+    description: "Various J1 corruptions: ,)I- ,)1- etc → J1-"
+
+  - pattern: '0-069-,\)I-'
+    replacement: '0-069-JI-'
+    description: ",)I- → JI-"
+
+  # --- Pound sign fixes ---
+  - pattern: '£E'
+    replacement: 'EE'
+    description: "£E → EE"
+    literal: true
+
+  - pattern: 'E£'
+    replacement: 'EE'
+    description: "E£ → EE"
+    literal: true
+
+  - pattern: 'A£'
+    replacement: 'AE'
+    description: "A£ → AE"
+    literal: true
+
+  - pattern: '££'
+    replacement: 'EE'
+    description: "££ → EE (double pound)"
+    literal: true
+
+  # --- Letter code fixes ---
+  - pattern: 'EL\.-'
+    replacement: 'EL-'
+    description: "EL. → EL"
+
+  - pattern: 'T\.J'
+    replacement: 'TJ'
+    description: "T.J → TJ"
+
+  # --- Doubled/extra chars in 2-letter code ---
+  - pattern: '0-069-MS5-'
+    replacement: '0-069-MS-'
+    description: "MS5 → MS"
+
+  - pattern: '0-069-M3S-'
+    replacement: '0-069-MS-'
+    description: "M3S → MS"
+
+  - pattern: '0-069-8B5-'
+    replacement: '0-069-BS-'
+    description: "8B5 → BS"
+
+  - pattern: '0-069-8BS-'
+    replacement: '0-069-BS-'
+    description: "8BS → BS"
+
+  - pattern: '0-069-85S-'
+    replacement: '0-069-BS-'
+    description: "85S → BS"
+
+  - pattern: '0-069-A4A-'
+    replacement: '0-069-AA-'
+    description: "A4A → AA"
+
+  - pattern: '0-069-D0F-'
+    replacement: '0-069-DF-'
+    description: "D0F → DF"
+
+  - pattern: '0-069-D0M-'
+    replacement: '0-069-DM-'
+    description: "D0M → DM"
+
+  - pattern: '0-069-0DM-'
+    replacement: '0-069-DM-'
+    description: "0DM → DM"
+
+  - pattern: '0-069-S5C-'
+    replacement: '0-069-SC-'
+    description: "S5C → SC"
+
+  - pattern: '0-069-0F-'
+    replacement: '0-069-DF-'
+    description: "0F → DF (missing D)"
+
+  - pattern: '0-069-1S5-'
+    replacement: '0-069-1S-'
+    description: "1S5 → 1S"
+
+  # --- Single letter code fix ---
+  - pattern: '0-069-M-(\d{4})'
+    replacement: '0-069-MS-\1'
+    description: "M- → MS- (missing S)"
+
+  # --- Dot instead of dash ---
+  - pattern: '0-069\.([A-Z])'
+    replacement: '0-069-\1'
+    description: "0-069.MS → 0-069-MS (dot→dash)"
+
+  # --- D instead of 0 in number part ---
+  - pattern: '(0-069-[A-Z]{2}-)D(\d{3,4})'
+    replacement: '\g<1>0\2'
+    description: "DM-D454 → DM-0454 (D→0 in number)"
+
+  - pattern: '(0-069-[A-Z]{2}-)D0+(\d{3,4})'
+    replacement: '\g<1>\2'
+    description: "PP-D0037 → PP-0037 (D0→0 in number)"
+
+  # --- Space in code number ---
+  - pattern: '(0-069-[A-Z\d]{2}-)\s+(\d)'
+    replacement: '\1\2'
+    description: "Space in code number: 'J1- 1004' → 'J1-1004'"
+
+  - pattern: '(0-069-[A-Z]{2}-\d{2})\s+(\d{2})\b'
+    replacement: '\1\2'
+    description: "Split code number: '01 14' → '0114'"
+
+  # --- Cross-distrito catch-alls ---
+  - pattern: '0-089-\.1-'
+    replacement: '0-089-J1-'
+    description: "0-089-.1 → 0-089-J1 (distrito 089 variant)"
+
+  - pattern: '(0-0[6-8]9-),1-'
+    replacement: '\g<1>J1-'
+    description: ",1- → J1- (generic catch-all for distritos 069/079/089)"

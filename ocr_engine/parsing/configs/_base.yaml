@@ -1,0 +1,31 @@
+# Base sanitization rules — universal, not distrito-specific.
+# These fix common OCR artifacts in DNI/document numbers.
+
+distrito: null
+distrito_name: "base"
+filas_esperadas: 60
+
+codigos_escuela: []
+
+destinos_especiales:
+  - "JUBILADO/A"
+  - "AP. EN SEDE"
+
+sanitize_rules:
+  # --- DNI cleanup ---
+  - pattern: '^((?:DNI|L[CE])\s+\d{4,9})[.,;:"''_]+'
+    replacement: '\1'
+    description: "DNI trailing punctuation: 'DNI 14009185.' → 'DNI 14009185'"
+
+  - pattern: '^((?:DNI|L[CE])\s+)\d\s+(\d{4,9})'
+    replacement: '\1\2'
+    description: "Extra digit before DNI: 'DNI 2 14819326' → 'DNI 14819326'"
+
+  - pattern: '^((?:DNI|L[CE])\s+\d{7,8})[A-Z_]+\s'
+    replacement: '\1 '
+    description: "Extra chars after DNI: '21548468B_' → '21548468'"
+
+  # --- Generic code space fixes ---
+  - pattern: '(\b[A-Z]{2})\s+-(\d{4})'
+    replacement: '\1-\2'
+    description: "Space before dash in code: 'MT -0004' → 'MT-0004'"
