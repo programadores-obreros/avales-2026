@@ -144,6 +144,20 @@ class SingleImagePipeline:
             **kwargs,
         )
 
+    @classmethod
+    def with_google(
+        cls, distrito: str = "069", api_key: str | None = None, **kwargs
+    ) -> SingleImagePipeline:
+        """Create a pipeline with Google Cloud Vision engine."""
+        from .engines.google_vision import GoogleVisionEngine
+
+        return cls(
+            engine=GoogleVisionEngine(api_key=api_key),
+            preprocessing=PreprocessingPipeline.default_vision(),
+            parser=PadronParser(distrito),
+            **kwargs,
+        )
+
 
 class HybridPipeline:
     """Multi-engine pipeline with fallback and cross-validation.

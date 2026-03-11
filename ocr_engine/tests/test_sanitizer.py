@@ -297,6 +297,84 @@ class TestMultiRuleChains:
 
 
 # ============================================================
+# GOOGLE VISION — JUBILADO/A OCR variants (5 rules)
+# ============================================================
+
+class TestGoogleVisionJubilado:
+
+    @pytest.mark.parametrize("input_line,expected", [
+        ("DNI 12345678 PEREZ JUBILADOIA 1", "DNI 12345678 PEREZ JUBILADO/A 1"),
+        ("DNI 12345678 PEREZ JUBILADOVA 1", "DNI 12345678 PEREZ JUBILADO/A 1"),
+        ("DNI 12345678 PEREZ JUBILADO / A 1", "DNI 12345678 PEREZ JUBILADO/A 1"),
+        ("DNI 12345678 PEREZ JUBILADO /A 1", "DNI 12345678 PEREZ JUBILADO/A 1"),
+        ("DNI 12345678 PEREZ JUBILAD0 A 1", "DNI 12345678 PEREZ JUBILADO/A 1"),
+    ])
+    def test_jubilado_variants(self, san, input_line, expected):
+        assert san.sanitize(input_line) == expected
+
+
+# ============================================================
+# GOOGLE VISION — Garbled distrito prefixes (4 rules)
+# ============================================================
+
+class TestGoogleVisionGarbledPrefix:
+
+    @pytest.mark.parametrize("input_line,expected", [
+        ("DNI 12345678 PEREZ 6:060-MS-0001 1", "DNI 12345678 PEREZ 0-069-MS-0001 1"),
+        ("DNI 12345678 PEREZ 6-060-MS-0001 1", "DNI 12345678 PEREZ 0-069-MS-0001 1"),
+        ("DNI 12345678 PEREZ 6.660-MS-0001 1", "DNI 12345678 PEREZ 0-069-MS-0001 1"),
+        ("DNI 12345678 PEREZ 0.060-MS-0001 1", "DNI 12345678 PEREZ 0-069-MS-0001 1"),
+        ("DNI 12345678 PEREZ 0.066-MS-0001 1", "DNI 12345678 PEREZ 0-069-MS-0001 1"),
+    ])
+    def test_garbled_prefix(self, san, input_line, expected):
+        assert san.sanitize(input_line) == expected
+
+
+# ============================================================
+# GOOGLE VISION — Distrito 069 misreads (4 rules)
+# ============================================================
+
+class TestGoogleVisionDistritoMisread:
+
+    @pytest.mark.parametrize("input_line,expected", [
+        ("DNI 12345678 PEREZ 0-060-MS-0001 1", "DNI 12345678 PEREZ 0-069-MS-0001 1"),
+        ("DNI 12345678 PEREZ 0-066-PP-0042 1", "DNI 12345678 PEREZ 0-069-PP-0042 1"),
+        ("DNI 12345678 PEREZ 0-065-MT-0010 1", "DNI 12345678 PEREZ 0-069-MT-0010 1"),
+        ("DNI 12345678 PEREZ 0-000-EE-0501 1", "DNI 12345678 PEREZ 0-069-EE-0501 1"),
+    ])
+    def test_distrito_misread(self, san, input_line, expected):
+        assert san.sanitize(input_line) == expected
+
+
+# ============================================================
+# GOOGLE VISION — Space normalization in destino (3 rules)
+# ============================================================
+
+class TestGoogleVisionSpaceNorm:
+
+    @pytest.mark.parametrize("input_line,expected", [
+        ("DNI 12345678 PEREZ 0-069 MS - 0002 1", "DNI 12345678 PEREZ 0-069-MS-0002 1"),
+        ("DNI 12345678 PEREZ 0-069 - MT - 0010 1", "DNI 12345678 PEREZ 0-069-MT-0010 1"),
+        ("DNI 12345678 PEREZ 0-069-MS 0014 1", "DNI 12345678 PEREZ 0-069-MS-0014 1"),
+    ])
+    def test_space_normalization(self, san, input_line, expected):
+        assert san.sanitize(input_line) == expected
+
+
+# ============================================================
+# GOOGLE VISION — Letter code misreads (2 rules)
+# ============================================================
+
+class TestGoogleVisionCodeMisread:
+
+    def test_m5_to_ms(self, san):
+        assert san.sanitize("DNI 12345678 PEREZ 0-069-M5-0042 1") == "DNI 12345678 PEREZ 0-069-MS-0042 1"
+
+    def test_15_to_is(self, san):
+        assert san.sanitize("DNI 12345678 PEREZ 0-069-15-0003 1") == "DNI 12345678 PEREZ 0-069-IS-0003 1"
+
+
+# ============================================================
 # EDGE CASES
 # ============================================================
 
@@ -330,4 +408,4 @@ class TestEdgeCases:
         assert san.rule_count == 4
 
     def test_rule_count_069(self, san):
-        assert san.rule_count == 45  # 4 base + 41 distrito
+        assert san.rule_count == 63  # 4 base + 59 distrito (incl. Google Vision rules)

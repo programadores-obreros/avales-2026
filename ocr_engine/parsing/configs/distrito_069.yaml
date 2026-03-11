@@ -36,7 +36,94 @@ destinos_especiales:
   - "SUPLENTE"
 
 sanitize_rules:
-  # --- Distrito number fixes ---
+  # --- JUBILADO/A OCR variants (Google Vision) ---
+  - pattern: 'JUBILADOIA'
+    replacement: 'JUBILADO/A'
+    description: "JUBILADOIA → JUBILADO/A (missing slash, I variant)"
+    literal: true
+
+  - pattern: 'JUBILADOVA'
+    replacement: 'JUBILADO/A'
+    description: "JUBILADOVA → JUBILADO/A (missing slash, V variant)"
+    literal: true
+
+  - pattern: 'JUBILADO / A'
+    replacement: 'JUBILADO/A'
+    description: "JUBILADO / A → JUBILADO/A (extra spaces)"
+    literal: true
+
+  - pattern: 'JUBILADO\s*/\s*A'
+    replacement: 'JUBILADO/A'
+    description: "Normalize spaces around slash in JUBILADO/A"
+
+  - pattern: 'JUBILAD[O0]\s*[/|\\]?\s*A\b'
+    replacement: 'JUBILADO/A'
+    description: "Catch-all JUBILADO/A variants"
+
+  # --- Completely garbled destino codes (Google Vision) ---
+  - pattern: '6\s*[:\-]\s*060\b'
+    replacement: '0-069'
+    description: "6:060 or 6-060 → 0-069 (garbled prefix)"
+
+  - pattern: '6[.-]660\b'
+    replacement: '0-069'
+    description: "6-660 or 6.660 → 0-069 (garbled prefix)"
+
+  - pattern: '\b0[.\s]060\b'
+    replacement: '0-069'
+    description: "0.060 or 0 060 → 0-069 (garbled prefix)"
+
+  - pattern: '\b0[.\s]066\b'
+    replacement: '0-069'
+    description: "0.066 → 0-069 (garbled prefix)"
+
+  # --- Distrito 069 misreads (Google Vision: 9→0,6,5) ---
+  - pattern: '0-060-'
+    replacement: '0-069-'
+    description: "0-060 → 0-069 (9 misread as 0)"
+    literal: true
+
+  - pattern: '0-066-'
+    replacement: '0-069-'
+    description: "0-066 → 0-069 (9 misread as 6)"
+    literal: true
+
+  - pattern: '0-065-'
+    replacement: '0-069-'
+    description: "0-065 → 0-069 (9 misread as 5)"
+    literal: true
+
+  - pattern: '0-000-'
+    replacement: '0-069-'
+    description: "0-000 → 0-069 (69 misread as 00)"
+    literal: true
+
+  # --- Space normalization in destino codes (Google Vision) ---
+  - pattern: '(0-069)\s+([A-Z]{2})\s*-\s*(\d{4})'
+    replacement: '\1-\2-\3'
+    description: "0-069 MS - 0002 → 0-069-MS-0002"
+
+  - pattern: '(0-069)\s*-\s*([A-Z]{2})\s*-\s*(\d{4})'
+    replacement: '\1-\2-\3'
+    description: "0-069 - MT - 0010 → 0-069-MT-0010"
+
+  - pattern: '(0-069-[A-Z]{2})\s+(\d{4})'
+    replacement: '\1-\2'
+    description: "0-069-MS 0014 → 0-069-MS-0014"
+
+  # --- M5 → MS (Google Vision: S misread as 5) ---
+  - pattern: '0-069-M5-'
+    replacement: '0-069-MS-'
+    description: "M5 → MS (S misread as 5)"
+    literal: true
+
+  # --- 15 → IS (Google Vision) ---
+  - pattern: '0-069-15-'
+    replacement: '0-069-IS-'
+    description: "15 → IS (I misread as 1, S as 5)"
+    literal: true
+
+  # --- Distrito number fixes (Tesseract) ---
   - pattern: 'D-069-'
     replacement: '0-069-'
     description: "D instead of 0: D-069 → 0-069"

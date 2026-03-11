@@ -107,6 +107,55 @@ def cmd_vision(args: argparse.Namespace) -> None:
     _print_summary(result)
 
 
+def cmd_google(args: argparse.Namespace) -> None:
+    """Process images using Google Cloud Vision."""
+    from .pipeline import SingleImagePipeline
+    from .output import OutputWriter
+
+    pipeline = SingleImagePipeline.with_google(distrito=args.distrito)
+
+    input_path = Path(args.input)
+    out_dir = Path(args.output)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Single file or directory (batch)
+    if input_path.is_file():
+        images = [input_path]
+    elif input_path.is_dir():
+        extensions = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
+        images = sorted(f for f in input_path.iterdir() if f.suffix.lower() in extensions)
+    else:
+        print(f"  Error: {input_path} not found")
+        sys.exit(1)
+
+    if not images:
+        print(f"  No images found in {input_path}")
+        sys.exit(1)
+
+    print(f"  Google Vision — Processing {len(images)} image(s)")
+    total_records = 0
+
+    for i, img_path in enumerate(images, 1):
+        print(f"\n  [{i}/{len(images)}] {img_path.name}")
+        try:
+            result = pipeline.process(str(img_path), debug=args.debug)
+            total_records += len(result.records)
+
+            base = img_path.stem
+            if "json" in args.format:
+                OutputWriter.to_json(result.records, out_dir / f"{base}_resultado.json", result)
+            if "csv" in args.format:
+                OutputWriter.to_csv(result.records, out_dir / f"{base}_datos.csv")
+            if "xlsx" in args.format:
+                OutputWriter.to_xlsx(result.records, out_dir / f"{base}_datos.xlsx")
+
+            _print_summary(result, indent=4)
+        except Exception as e:
+            print(f"    ERROR: {e}")
+
+    print(f"\n  Total: {total_records} records from {len(images)} images")
+
+
 def _print_summary(result, indent: int = 2) -> None:
     """Print a summary of processing results."""
     pad = " " * indent
@@ -154,6 +203,11 @@ def build_parser() -> argparse.ArgumentParser:
     vision_parser.add_argument("--pagina", type=int, default=None, help="Known page number")
     add_common(vision_parser)
 
+    # google subcommand
+    google_parser = subparsers.add_parser("google", help="Process with Google Cloud Vision")
+    google_parser.add_argument("input", help="Path to image file or directory")
+    add_common(google_parser)
+
     return parser
 
 
@@ -170,6 +224,7 @@ def main(argv: list[str] | None = None) -> None:
         "image": cmd_image,
         "batch": cmd_batch,
         "vision": cmd_vision,
+        "google": cmd_google,
     }
 
     cmd_func = commands.get(args.command)

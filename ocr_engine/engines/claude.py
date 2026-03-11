@@ -146,8 +146,9 @@ class ClaudeVisionEngine(OcrEngine):
             raw_text = re.sub(r"\n?```$", "", raw_text)
             raw_text = raw_text.strip()
 
-        # Parse JSON response into OcrLines
+        # Parse JSON response into OcrLines and text-formatted raw_text
         lines: list[OcrLine] = []
+        text_lines: list[str] = []
         try:
             data = json.loads(raw_text)
             registros = data.get("registros", [])
@@ -170,15 +171,20 @@ class ClaudeVisionEngine(OcrEngine):
                 line_text = " ".join(parts)
                 if line_text:
                     lines.append(OcrLine(text=line_text, confidence=0.9))
+                    text_lines.append(line_text)
         except (json.JSONDecodeError, KeyError):
             # If JSON parsing fails, return raw text as lines
             for line_text in raw_text.split("\n"):
                 stripped = line_text.strip()
                 if stripped:
                     lines.append(OcrLine(text=stripped))
+                    text_lines.append(stripped)
+
+        # Use text-formatted lines as raw_text so the parser can handle it
+        formatted_text = "\n".join(text_lines)
 
         return OcrResult(
-            raw_text=raw_text,
+            raw_text=formatted_text,
             lines=lines,
             confidence=0.9 if lines else 0.0,
             engine_name=self.name,
