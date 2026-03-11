@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SUTEBA 2026 - Verificar Padron</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --surface3: #475569;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --orange: #f97316;
+      --purple: #a855f7;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface2);
+      padding: 0.4rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      z-index: 200;
+    }
+    header h1 { font-size: 0.9rem; font-weight: 600; white-space: nowrap; }
+    header h1 span { color: var(--accent); }
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    .header-right strong { color: var(--text); }
+    .volunteer-name {
+      background: var(--accent);
+      color: white;
+      padding: 0.15rem 0.5rem;
+      border-radius: 1rem;
+      font-size: 0.65rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      background: var(--surface);
+      padding: 0.25rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--surface2);
+    }
+    .progress-track {
+      flex: 1;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    /* Main layout — vertical on mobile, horizontal on desktop */
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    @media (min-width: 900px) {
+      .main-content {
+        flex-direction: row;
+      }
+      .img-panel { width: 50%; }
+      .data-panel { width: 50%; }
+    }
+
+    /* Image panel */
+    .img-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex: 0 0 auto;
+      height: 40vh;
+      height: 40dvh;
+      border-bottom: 2px solid var(--surface2);
+    }
+    @media (min-width: 900px) {
+      .img-panel {
+        height: auto;
+        flex: 1;
+        border-bottom: none;
+        border-right: 2px solid var(--surface2);
+      }
+    }
+    .img-panel-header {
+      padding: 0.3rem 0.5rem;
+      background: var(--surface2);
+      font-size: 0.7rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .img-panel-body {
+      flex: 1;
+      overflow: hidden;
+      background: #000;
+      position: relative;
+      touch-action: none;
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .img-panel-body:active { cursor: grabbing; }
+    .img-panel-body img {
+      display: block;
+      transform-origin: 0 0;
+      will-change: transform;
+      pointer-events: none;
+    }
+
+    /* Zoom controls */
+    .zoom-controls {
+      display: flex;
+      gap: 0.2rem;
+      align-items: center;
+    }
+    .zoom-controls .btn { font-size: 0.75rem; padding: 0.2rem 0.45rem; min-width: 28px; text-align: center; }
+    .zoom-level { font-size: 0.6rem; color: var(--text-muted); min-width: 32px; text-align: center; }
+
+    /* Data panel */
+    .data-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex: 1;
+    }
+    .data-panel-header {
+      padding: 0.3rem 0.5rem;
+      background: var(--surface2);
+      font-size: 0.7rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      gap: 0.5rem;
+    }
+    .data-panel-body {
+      flex: 1;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.3rem 0.6rem;
+      border: 1px solid var(--surface3);
+      background: var(--surface);
+      color: var(--text-muted);
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 0.65rem;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-success { background: var(--green); color: white; border-color: var(--green); }
+    .btn-success:hover { background: #16a34a; }
+    .btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
+    .btn-danger:hover { background: var(--red); color: white; }
+    .btn-lg { padding: 0.5rem 1.2rem; font-size: 0.8rem; min-height: 44px; }
+
+    /* Table */
+    .v-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.72rem;
+    }
+    .v-table thead { position: sticky; top: 0; z-index: 10; }
+    .v-table th {
+      background: var(--surface2);
+      padding: 0.35rem 0.4rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    .v-table td {
+      padding: 0.2rem 0.35rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+    .v-table tr:hover td { background: rgba(59,130,246,0.08); }
+    .v-table tr.edited td { background: rgba(34,197,94,0.08); }
+    .v-table tr.confirmed td { opacity: 0.5; }
+
+    .col-num {
+      color: var(--text-muted);
+      font-size: 0.6rem;
+      text-align: right;
+      width: 20px;
+      user-select: none;
+    }
+    .col-dni {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      color: var(--accent);
+      font-weight: 600;
+      min-width: 70px;
+    }
+    .col-nombre { min-width: 150px; }
+    .col-destino {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.68rem;
+      min-width: 110px;
+    }
+    .col-check { width: 28px; text-align: center; }
+    .col-prio { width: 8px; padding: 0 !important; }
+
+    /* Priority badges */
+    .prio-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .prio-ALTA .prio-dot { background: var(--red); }
+    .prio-MEDIA .prio-dot { background: var(--yellow); }
+    .prio-BAJA .prio-dot { background: var(--green); }
+
+    .prio-ALTA td { border-left: 2px solid var(--red); }
+    .prio-MEDIA td:first-child { border-left: 2px solid var(--yellow); }
+
+    /* Prod comparison */
+    .prod-hint {
+      font-size: 0.55rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+      line-height: 1.2;
+    }
+    .prod-hint.diff {
+      color: var(--yellow);
+      font-weight: 600;
+    }
+
+    /* Task priority stats */
+    .task-stats {
+      display: flex; gap: 0.5rem;
+      font-size: 0.6rem; color: var(--text-muted);
+    }
+    .task-stats .ts-alta { color: var(--red); }
+    .task-stats .ts-media { color: var(--yellow); }
+    .task-stats .ts-baja { color: var(--green); }
+
+    /* Editable cell */
+    .editable {
+      cursor: text;
+      padding: 0.12rem 0.25rem;
+      border-radius: 0.2rem;
+      transition: background 0.15s;
+      min-height: 1.2em;
+      outline: none;
+    }
+    .editable:hover { background: rgba(255,255,255,0.05); }
+    .editable:focus {
+      background: var(--bg);
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+      color: white;
+    }
+    .editable.changed {
+      border-left: 2px solid var(--green);
+      padding-left: calc(0.25rem - 2px);
+    }
+
+    /* Check button */
+    .check-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--surface3);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+    .check-btn:hover { border-color: var(--green); color: var(--green); }
+    .check-btn.checked {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+    }
+
+    /* Escuela colors */
+    .esc-jubilado { color: var(--yellow); }
+    .esc-sede { color: var(--orange); }
+    .esc-codigo { color: var(--green); }
+    .esc-vacio { color: var(--red); opacity: 0.5; }
+
+    /* Bottom action bar */
+    .action-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--surface2);
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Status bar */
+    .status-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--surface2);
+      padding: 0.2rem 0.75rem;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .status-bar .save-ok { color: var(--green); }
+
+    /* Onboarding overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .overlay-box {
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+    .overlay-box h2 { margin-bottom: 0.5rem; font-size: 1.1rem; }
+    .overlay-box p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .overlay-box input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--surface3);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      outline: none;
+      margin-bottom: 1rem;
+    }
+    .overlay-box input:focus { border-color: var(--accent); }
+    .overlay-box .btn { width: 100%; padding: 0.75rem; font-size: 1rem; }
+
+    /* Page selector overlay */
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: 0.35rem;
+      max-height: 60vh;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+    .page-cell {
+      padding: 0.4rem 0.2rem;
+      border: 2px solid var(--surface3);
+      border-radius: 0.35rem;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.7rem;
+      transition: all 0.15s;
+    }
+    .page-cell:hover { border-color: var(--accent); background: rgba(59,130,246,0.1); }
+    .page-cell.done { background: var(--green); border-color: var(--green); color: white; cursor: default; opacity: 0.5; }
+    .page-cell.mine { background: var(--accent); border-color: var(--accent); color: white; }
+    .page-cell.assigned { background: var(--surface2); color: var(--text-muted); cursor: not-allowed; opacity: 0.5; }
+    .page-cell .pc-recs { font-size: 0.55rem; color: var(--text-muted); display: block; }
+    .page-cell.done .pc-recs, .page-cell.mine .pc-recs { color: rgba(255,255,255,0.7); }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* Keyboard hints */
+    .kbd {
+      background: var(--surface2);
+      border: 1px solid var(--surface3);
+      border-radius: 3px;
+      padding: 0 4px;
+      font-size: 0.55rem;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, getDocs, collection, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    const app = initializeApp({
+      apiKey: "AIzaSyDeGyMnTg2ICElfv1YALmW5Ky9-VMEfqog",
+      authDomain: "suteba-2026.firebaseapp.com",
+      projectId: "suteba-2026",
+      storageBucket: "suteba-2026.firebasestorage.app",
+      messagingSenderId: "440127524100",
+      appId: "1:440127524100:web:dbcf54bc66fb9897795451"
+    });
+
+    const db = getFirestore(app);
+    window._db = db;
+    window._doc = doc;
+    window._setDoc = setDoc;
+    window._getDoc = getDoc;
+    window._getDocs = getDocs;
+    window._collection = collection;
+    window._onSnapshot = onSnapshot;
+    window._runTransaction = runTransaction;
+    window._serverTimestamp = serverTimestamp;
+    window._firestoreReady = true;
+    window.dispatchEvent(new Event('firestore-ready'));
+  </script>
+</head>
+<body>
+
+  <!-- Onboarding overlay -->
+  <div class="overlay" id="onboarding" style="display:none">
+    <div class="overlay-box">
+      <h2>Verificar Padron SUTEBA</h2>
+      <p>Ingresa tu nombre para empezar a verificar.<br>Se te asignaran paginas del padron para revisar.</p>
+      <input type="text" id="volunteer-name-input" placeholder="Tu nombre..." autofocus>
+      <button class="btn btn-primary" onclick="startVolunteer()">Empezar</button>
+    </div>
+  </div>
+
+  <!-- Page selector overlay -->
+  <div class="overlay" id="page-selector" style="display:none">
+    <div class="overlay-box" style="max-width:600px">
+      <h2>Elegir pagina</h2>
+      <p>Selecciona una pagina para verificar. Las verdes ya estan listas.</p>
+      <div class="page-grid" id="page-grid"></div>
+      <div style="margin-top:1rem;display:flex;gap:0.5rem;justify-content:center">
+        <button class="btn btn-primary btn-lg" onclick="autoAssign()">Asignarme la siguiente</button>
+        <button class="btn btn-lg" onclick="closePageSelector()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <header>
+    <h1><span>SUTEBA</span> Verificar</h1>
+    <div class="header-right">
+      <span>Hoja <strong id="stat-current">-</strong> / <strong id="stat-total">0</strong></span>
+      <span>Mis: <strong id="stat-mine" style="color:var(--green)">0</strong></span>
+      <span id="volunteer-badge" class="volunteer-name" onclick="openPageSelector()" style="display:none"></span>
+    </div>
+  </header>
+
+  <div class="progress-bar">
+    <span id="progress-text">0 / 0</span>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <span id="progress-pct">0%</span>
+  </div>
+
+  <div class="main-content">
+    <div class="img-panel">
+      <div class="img-panel-header">
+        <span id="img-title">Imagen</span>
+        <div class="zoom-controls">
+          <button class="btn" onclick="zoomTo(-1)" title="Alejar">−</button>
+          <span class="zoom-level" id="zoom-level">100%</span>
+          <button class="btn" onclick="zoomTo(1)" title="Acercar">+</button>
+          <button class="btn" onclick="zoomFit()" title="Ajustar">Fit</button>
+          <button class="btn" onclick="openPageSelector()">Pags</button>
+        </div>
+      </div>
+      <div class="img-panel-body" id="img-body">
+        <div class="empty-state">Selecciona una pagina para verificar</div>
+      </div>
+    </div>
+
+    <div class="data-panel">
+      <div class="data-panel-header">
+        <span id="data-title">Datos OCR</span>
+        <div style="display:flex;gap:0.25rem">
+          <button class="btn" onclick="confirmAll()">Confirmar todo</button>
+          <button class="btn" onclick="addRow()">+ Fila</button>
+        </div>
+      </div>
+      <div class="data-panel-body" id="data-body">
+        <div class="empty-state">Selecciona una pagina para verificar</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-bar" id="action-bar" style="display:none">
+    <button class="btn btn-lg" onclick="prevTask()" id="btn-prev" disabled>&#9664; Anterior</button>
+    <button class="btn btn-success btn-lg" onclick="completeTask()" id="btn-complete">Completar pagina</button>
+    <button class="btn btn-primary btn-lg" onclick="nextTask()" id="btn-next">Siguiente &#9654;</button>
+  </div>
+
+  <div class="status-bar">
+    <span id="status-msg">Cargando...</span>
+    <span id="save-status"></span>
+  </div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let allTasks = [];          // from tasks.json
+let taskStatus = {};        // taskId -> {status, volunteer, records, ts}
+let currentTaskIdx = null;  // index in allTasks
+let volunteerId = '';       // localStorage ID
+let volunteerName = '';     // display name
+let localEdits = {};        // taskId -> {records, confirmed[]}
+let firestoreReady = false;
+
+const LS_KEY_VOL = 'verificar_volunteer_v1';
+const LS_KEY_EDITS = 'verificar_edits_v1';
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  setStatus('Cargando datos...');
+
+  // Load tasks
+  const res = await fetch('data/verificacion/tasks.json');
+  const data = await res.json();
+  allTasks = data.tasks;
+
+  document.getElementById('stat-total').textContent = allTasks.length;
+  const gs = data.stats || {};
+  setStatus(`${allTasks.length} pags, ${data.total_records} reg — Alta:${gs.alta||0} Media:${gs.media||0} Baja:${gs.baja||0}`);
+
+  // Load local edits
+  try {
+    const saved = localStorage.getItem(LS_KEY_EDITS);
+    if (saved) localEdits = JSON.parse(saved);
+  } catch(e) { localEdits = {}; }
+
+  // Check volunteer
+  const saved = localStorage.getItem(LS_KEY_VOL);
+  if (saved) {
+    const vol = JSON.parse(saved);
+    volunteerId = vol.id;
+    volunteerName = vol.name;
+    showVolunteer();
+  } else {
+    document.getElementById('onboarding').style.display = 'flex';
+  }
+
+  // Init pan+zoom on image panel
+  initPanZoom();
+
+  // Wait for Firestore
+  waitForFirestore().then(() => {
+    loadTaskStatus();
+    subscribeToStatus();
+  });
+}
+
+function waitForFirestore() {
+  return new Promise(resolve => {
+    if (window._firestoreReady) { firestoreReady = true; resolve(); return; }
+    window.addEventListener('firestore-ready', () => { firestoreReady = true; resolve(); });
+  });
+}
+
+// ============================================================
+// VOLUNTEER
+// ============================================================
+function startVolunteer() {
+  const input = document.getElementById('volunteer-name-input');
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+
+  volunteerId = 'vol_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+  volunteerName = name;
+
+  localStorage.setItem(LS_KEY_VOL, JSON.stringify({ id: volunteerId, name: volunteerName }));
+  document.getElementById('onboarding').style.display = 'none';
+  showVolunteer();
+
+  // Save volunteer to Firestore
+  if (firestoreReady) {
+    const db = window._db;
+    window._setDoc(window._doc(db, 'verificacion_volunteers', volunteerId), {
+      name: volunteerName,
+      created: Date.now(),
+      total_done: 0,
+    }).catch(e => console.error('volunteer save error:', e));
+  }
+
+  // Auto-open page selector
+  openPageSelector();
+}
+
+function showVolunteer() {
+  const badge = document.getElementById('volunteer-badge');
+  badge.textContent = volunteerName;
+  badge.style.display = 'inline-block';
+}
+
+// ============================================================
+// FIRESTORE — TASK STATUS
+// ============================================================
+async function loadTaskStatus() {
+  if (!firestoreReady) return;
+  const db = window._db;
+  try {
+    const snapshot = await window._getDocs(window._collection(db, 'verificacion_tasks'));
+    snapshot.forEach(docSnap => {
+      taskStatus[docSnap.id] = docSnap.data();
+    });
+    updateProgress();
+    updateMyCount();
+  } catch(e) {
+    console.error('load task status error:', e);
+  }
+}
+
+function subscribeToStatus() {
+  if (!firestoreReady) return;
+  const db = window._db;
+  window._onSnapshot(window._collection(db, 'verificacion_tasks'), (snapshot) => {
+    snapshot.docChanges().forEach(change => {
+      if (change.type === 'added' || change.type === 'modified') {
+        taskStatus[change.doc.id] = change.doc.data();
+      }
+    });
+    updateProgress();
+    updateMyCount();
+  });
+}
+
+function updateProgress() {
+  const total = allTasks.length;
+  const done = Object.values(taskStatus).filter(s => s.status === 'done').length;
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+
+  document.getElementById('progress-text').textContent = `${done} / ${total}`;
+  document.getElementById('progress-fill').style.width = `${pct}%`;
+  document.getElementById('progress-pct').textContent = `${pct}%`;
+}
+
+function updateMyCount() {
+  const count = Object.values(taskStatus).filter(s =>
+    s.volunteer_id === volunteerId && s.status === 'done'
+  ).length;
+  document.getElementById('stat-mine').textContent = count;
+}
+
+// ============================================================
+// PAGE SELECTOR
+// ============================================================
+function openPageSelector() {
+  const grid = document.getElementById('page-grid');
+  let html = '';
+
+  for (let i = 0; i < allTasks.length; i++) {
+    const t = allTasks[i];
+    const st = taskStatus[t.id];
+    let cls = 'page-cell';
+    let extra = '';
+
+    if (st?.status === 'done') {
+      cls += ' done';
+      extra = st.volunteer_name || '';
+    } else if (st?.status === 'assigned' && st.volunteer_id === volunteerId) {
+      cls += ' mine';
+    } else if (st?.status === 'assigned') {
+      cls += ' assigned';
+      extra = st.volunteer_name || '';
+    }
+
+    // Priority border color
+    const prio = t.priority || '';
+    const prioColor = prio === 'ALTA' ? 'var(--red)' : prio === 'MEDIA' ? 'var(--yellow)' : '';
+    const prioStyle = prioColor && !st?.status ? `border-color:${prioColor}` : '';
+    const prioLabel = t.stats ? `${t.stats.alta || 0}⚠` : '';
+
+    html += `<div class="${cls}" onclick="selectTask(${i})" title="${t.image} [${prio}]${extra ? ' — ' + extra : ''}" style="${prioStyle}">
+      ${i + 1}
+      <span class="pc-recs">${t.total_records}${prioLabel ? ' · ' + prioLabel : ''}</span>
+    </div>`;
+  }
+
+  grid.innerHTML = html;
+  document.getElementById('page-selector').style.display = 'flex';
+}
+
+function closePageSelector() {
+  document.getElementById('page-selector').style.display = 'none';
+}
+
+function autoAssign() {
+  // Find first unclaimed task
+  for (let i = 0; i < allTasks.length; i++) {
+    const st = taskStatus[allTasks[i].id];
+    if (!st || (st.status !== 'done' && st.status !== 'assigned')) {
+      selectTask(i);
+      return;
+    }
+    // If assigned to me, continue from there
+    if (st.status === 'assigned' && st.volunteer_id === volunteerId) {
+      selectTask(i);
+      return;
+    }
+  }
+  alert('No hay paginas disponibles.');
+}
+
+// ============================================================
+// TASK SELECTION
+// ============================================================
+async function selectTask(idx) {
+  const task = allTasks[idx];
+  const st = taskStatus[task.id];
+
+  // Don't allow selecting done tasks by others
+  if (st?.status === 'done' && st.volunteer_id !== volunteerId) {
+    return;
+  }
+  // Don't allow selecting assigned tasks by others
+  if (st?.status === 'assigned' && st.volunteer_id !== volunteerId) {
+    return;
+  }
+
+  closePageSelector();
+  currentTaskIdx = idx;
+
+  // Claim in Firestore
+  if (firestoreReady && (!st || st.status !== 'done')) {
+    try {
+      await window._setDoc(window._doc(window._db, 'verificacion_tasks', task.id), {
+        status: 'assigned',
+        volunteer_id: volunteerId,
+        volunteer_name: volunteerName,
+        assigned_at: Date.now(),
+      }, { merge: true });
+    } catch(e) {
+      console.error('claim error:', e);
+    }
+  }
+
+  document.getElementById('stat-current').textContent = idx + 1;
+  document.getElementById('action-bar').style.display = 'flex';
+
+  renderImage();
+  renderData();
+  updateNavButtons();
+  setStatus(`Pagina ${idx + 1} — ${task.image}`);
+}
+
+function updateNavButtons() {
+  document.getElementById('btn-prev').disabled = currentTaskIdx === 0;
+  document.getElementById('btn-next').disabled = currentTaskIdx === allTasks.length - 1;
+
+  const st = taskStatus[allTasks[currentTaskIdx]?.id];
+  const btn = document.getElementById('btn-complete');
+  if (st?.status === 'done') {
+    btn.textContent = 'Completada';
+    btn.className = 'btn btn-lg';
+    btn.disabled = true;
+  } else {
+    btn.textContent = 'Completar pagina';
+    btn.className = 'btn btn-success btn-lg';
+    btn.disabled = false;
+  }
+}
+
+function prevTask() {
+  if (currentTaskIdx > 0) selectTask(currentTaskIdx - 1);
+}
+
+function nextTask() {
+  if (currentTaskIdx < allTasks.length - 1) selectTask(currentTaskIdx + 1);
+}
+
+// ============================================================
+// IMAGE
+// ============================================================
+// ============================================================
+// PAN + ZOOM ENGINE
+// ============================================================
+const pz = {
+  scale: 1,
+  x: 0,
+  y: 0,
+  minScale: 0.5,
+  maxScale: 6,
+  img: null,
+  container: null,
+  imgW: 0,
+  imgH: 0,
+  // Drag state
+  dragging: false,
+  startX: 0,
+  startY: 0,
+  startPanX: 0,
+  startPanY: 0,
+  // Pinch state
+  lastDist: 0,
+  lastMidX: 0,
+  lastMidY: 0,
+};
+
+function pzApply() {
+  if (!pz.img) return;
+  pz.img.style.transform = `translate(${pz.x}px, ${pz.y}px) scale(${pz.scale})`;
+  document.getElementById('zoom-level').textContent = `${Math.round(pz.scale * 100)}%`;
+}
+
+function pzClamp() {
+  // Allow panning beyond edges by half the container size
+  if (!pz.container) return;
+  const cw = pz.container.clientWidth;
+  const ch = pz.container.clientHeight;
+  const sw = pz.imgW * pz.scale;
+  const sh = pz.imgH * pz.scale;
+  const margin = 50;
+
+  if (sw <= cw) {
+    pz.x = (cw - sw) / 2; // center if smaller
+  } else {
+    pz.x = Math.min(margin, Math.max(cw - sw - margin, pz.x));
+  }
+  if (sh <= ch) {
+    pz.y = (ch - sh) / 2;
+  } else {
+    pz.y = Math.min(margin, Math.max(ch - sh - margin, pz.y));
+  }
+}
+
+function zoomAt(newScale, cx, cy) {
+  newScale = Math.min(pz.maxScale, Math.max(pz.minScale, newScale));
+  const ratio = newScale / pz.scale;
+  pz.x = cx - (cx - pz.x) * ratio;
+  pz.y = cy - (cy - pz.y) * ratio;
+  pz.scale = newScale;
+  pzClamp();
+  pzApply();
+}
+
+function zoomTo(dir) {
+  if (!pz.container) return;
+  const step = dir > 0 ? 1.3 : 1 / 1.3;
+  const cx = pz.container.clientWidth / 2;
+  const cy = pz.container.clientHeight / 2;
+  zoomAt(pz.scale * step, cx, cy);
+}
+
+function zoomFit() {
+  if (!pz.container || !pz.imgW) return;
+  const cw = pz.container.clientWidth;
+  const ch = pz.container.clientHeight;
+  pz.scale = Math.min(cw / pz.imgW, ch / pz.imgH);
+  pz.x = (cw - pz.imgW * pz.scale) / 2;
+  pz.y = (ch - pz.imgH * pz.scale) / 2;
+  pzApply();
+}
+
+function initPanZoom() {
+  const el = document.getElementById('img-body');
+  pz.container = el;
+
+  // Mouse wheel zoom
+  el.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = el.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const step = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    zoomAt(pz.scale * step, cx, cy);
+  }, { passive: false });
+
+  // Mouse drag
+  el.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    pz.dragging = true;
+    pz.startX = e.clientX;
+    pz.startY = e.clientY;
+    pz.startPanX = pz.x;
+    pz.startPanY = pz.y;
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!pz.dragging) return;
+    pz.x = pz.startPanX + (e.clientX - pz.startX);
+    pz.y = pz.startPanY + (e.clientY - pz.startY);
+    pzClamp();
+    pzApply();
+  });
+  window.addEventListener('mouseup', () => { pz.dragging = false; });
+
+  // Touch pan + pinch zoom
+  el.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      pz.dragging = true;
+      pz.startX = e.touches[0].clientX;
+      pz.startY = e.touches[0].clientY;
+      pz.startPanX = pz.x;
+      pz.startPanY = pz.y;
+    } else if (e.touches.length === 2) {
+      pz.dragging = false;
+      const dx = e.touches[1].clientX - e.touches[0].clientX;
+      const dy = e.touches[1].clientY - e.touches[0].clientY;
+      pz.lastDist = Math.hypot(dx, dy);
+      const rect = el.getBoundingClientRect();
+      pz.lastMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+      pz.lastMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+    }
+  }, { passive: true });
+
+  el.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (e.touches.length === 1 && pz.dragging) {
+      pz.x = pz.startPanX + (e.touches[0].clientX - pz.startX);
+      pz.y = pz.startPanY + (e.touches[0].clientY - pz.startY);
+      pzClamp();
+      pzApply();
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[1].clientX - e.touches[0].clientX;
+      const dy = e.touches[1].clientY - e.touches[0].clientY;
+      const dist = Math.hypot(dx, dy);
+      const rect = el.getBoundingClientRect();
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+
+      if (pz.lastDist > 0) {
+        const ratio = dist / pz.lastDist;
+        zoomAt(pz.scale * ratio, midX, midY);
+      }
+      pz.lastDist = dist;
+      pz.lastMidX = midX;
+      pz.lastMidY = midY;
+    }
+  }, { passive: false });
+
+  el.addEventListener('touchend', () => { pz.dragging = false; pz.lastDist = 0; });
+
+  // Double-tap / double-click to toggle zoom
+  let lastTap = 0;
+  el.addEventListener('dblclick', (e) => {
+    const rect = el.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    if (pz.scale > 1.5) {
+      zoomFit();
+    } else {
+      zoomAt(3, cx, cy);
+    }
+  });
+}
+
+function renderImage() {
+  const body = document.getElementById('img-body');
+  const title = document.getElementById('img-title');
+  if (currentTaskIdx === null) {
+    body.innerHTML = '<div class="empty-state">Selecciona una pagina</div>';
+    return;
+  }
+  const task = allTasks[currentTaskIdx];
+  title.textContent = `Hoja ${currentTaskIdx + 1} — ${task.image}`;
+
+  const img = new Image();
+  img.onload = () => {
+    pz.img = img;
+    pz.imgW = img.naturalWidth;
+    pz.imgH = img.naturalHeight;
+    body.innerHTML = '';
+    body.appendChild(img);
+    zoomFit();
+  };
+  img.src = `data/verificacion/images/${encodeURIComponent(task.image)}`;
+}
+
+// ============================================================
+// DATA RENDERING
+// ============================================================
+function getTaskRecords(idx) {
+  const task = allTasks[idx];
+  if (localEdits[task.id]) {
+    return localEdits[task.id].records;
+  }
+  return task.records;
+}
+
+function getConfirmed(idx) {
+  const task = allTasks[idx];
+  if (localEdits[task.id]) {
+    return localEdits[task.id].confirmed || [];
+  }
+  return [];
+}
+
+function renderData() {
+  const body = document.getElementById('data-body');
+  const title = document.getElementById('data-title');
+  if (currentTaskIdx === null) {
+    body.innerHTML = '<div class="empty-state">Selecciona una pagina</div>';
+    return;
+  }
+
+  const task = allTasks[currentTaskIdx];
+  const records = getTaskRecords(currentTaskIdx);
+  const confirmed = getConfirmed(currentTaskIdx);
+  const confCount = confirmed.filter(Boolean).length;
+  const taskStats = task.stats || {};
+
+  title.innerHTML = `${records.length} reg — ${confCount} OK
+    <span class="task-stats">
+      ${taskStats.alta ? `<span class="ts-alta">${taskStats.alta} alta</span>` : ''}
+      ${taskStats.media ? `<span class="ts-media">${taskStats.media} media</span>` : ''}
+      ${taskStats.baja ? `<span class="ts-baja">${taskStats.baja} baja</span>` : ''}
+    </span>`;
+
+  let html = `<table class="v-table">
+    <thead><tr>
+      <th></th><th>#</th><th>DNI</th><th>APELLIDO Y NOMBRE</th><th>DESTINO</th><th title="Confirmar">OK</th>
+    </tr></thead><tbody>`;
+
+  for (let i = 0; i < records.length; i++) {
+    const r = records[i];
+    const isConfirmed = confirmed[i];
+    const isEdited = r._changed;
+    const escCls = escuelaClass(r.destino);
+    const prio = r.priority || '';
+    const prod = r.prod || null;
+    const diff = r.diff || [];
+
+    let rowCls = `prio-${prio}`;
+    if (isEdited) rowCls += ' edited';
+    if (isConfirmed && !isEdited) rowCls += ' confirmed';
+
+    const dniHint = prod && diff.includes('documento')
+      ? `<div class="prod-hint diff">Prod: ${esc(prod.dni)}</div>` : '';
+    const nombreHint = prod && diff.includes('nombre')
+      ? `<div class="prod-hint diff">Prod: ${esc(prod.nombre)}</div>`
+      : prod && !diff.length ? `<div class="prod-hint">✓ Prod OK</div>` : '';
+    const destinoHint = prod && diff.includes('destino')
+      ? `<div class="prod-hint diff">Prod: ${esc(prod.escuela)}</div>` : '';
+
+    html += `<tr class="${rowCls}" data-idx="${i}">
+      <td class="col-prio"><span class="prio-dot" title="${prio}"></span></td>
+      <td class="col-num">${r.row || i + 1}</td>
+      <td class="col-dni">
+        <div class="editable${isEdited ? ' changed' : ''}" contenteditable="true"
+             data-field="documento" data-idx="${i}"
+             inputmode="numeric"
+             onblur="onCellEdit(this)" onkeydown="cellKeydown(event, this)">${esc(r.documento)}</div>
+        ${dniHint}
+      </td>
+      <td class="col-nombre">
+        <div class="editable${isEdited ? ' changed' : ''}" contenteditable="true"
+             data-field="nombre" data-idx="${i}"
+             onblur="onCellEdit(this)" onkeydown="cellKeydown(event, this)">${esc(r.nombre)}</div>
+        ${nombreHint}
+      </td>
+      <td class="col-destino ${escCls}">
+        <div class="editable${isEdited ? ' changed' : ''}" contenteditable="true"
+             data-field="destino" data-idx="${i}"
+             onblur="onCellEdit(this)" onkeydown="cellKeydown(event, this)">${esc(r.destino) || '-'}</div>
+        ${destinoHint}
+      </td>
+      <td class="col-check">
+        <button class="check-btn ${isConfirmed ? 'checked' : ''}" onclick="toggleConfirm(${i})" title="Confirmar fila">
+          ${isConfirmed ? '&#10003;' : ''}
+        </button>
+      </td>
+    </tr>`;
+  }
+
+  html += '</tbody></table>';
+  body.innerHTML = html;
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escuelaClass(e) {
+  if (!e) return 'esc-vacio';
+  if (e.includes('JUBILADO')) return 'esc-jubilado';
+  if (e.includes('SEDE')) return 'esc-sede';
+  return 'esc-codigo';
+}
+
+// ============================================================
+// CONFIRM ROW
+// ============================================================
+function toggleConfirm(idx) {
+  if (currentTaskIdx === null) return;
+  const task = allTasks[currentTaskIdx];
+
+  if (!localEdits[task.id]) {
+    localEdits[task.id] = {
+      records: JSON.parse(JSON.stringify(task.records)),
+      confirmed: new Array(task.records.length).fill(false),
+    };
+  }
+
+  const edit = localEdits[task.id];
+  if (!edit.confirmed) edit.confirmed = new Array(edit.records.length).fill(false);
+  edit.confirmed[idx] = !edit.confirmed[idx];
+
+  saveLocal();
+  renderData();
+}
+
+function confirmAll() {
+  if (currentTaskIdx === null) return;
+  const task = allTasks[currentTaskIdx];
+  const records = getTaskRecords(currentTaskIdx);
+
+  if (!localEdits[task.id]) {
+    localEdits[task.id] = {
+      records: JSON.parse(JSON.stringify(records)),
+      confirmed: new Array(records.length).fill(false),
+    };
+  }
+
+  const allConfirmed = localEdits[task.id].confirmed.every(Boolean);
+  localEdits[task.id].confirmed = new Array(records.length).fill(!allConfirmed);
+
+  saveLocal();
+  renderData();
+}
+
+// ============================================================
+// CELL EDITING
+// ============================================================
+function onCellEdit(el) {
+  const field = el.dataset.field;
+  const idx = parseInt(el.dataset.idx);
+  const newVal = el.textContent.trim();
+  if (currentTaskIdx === null) return;
+
+  const task = allTasks[currentTaskIdx];
+  if (!localEdits[task.id]) {
+    localEdits[task.id] = {
+      records: JSON.parse(JSON.stringify(task.records)),
+      confirmed: new Array(task.records.length).fill(false),
+    };
+  }
+
+  const records = localEdits[task.id].records;
+  const oldVal = records[idx][field] || '';
+  if (newVal === oldVal) return;
+
+  records[idx][field] = newVal;
+  records[idx]._changed = true;
+
+  // Auto-confirm edited rows
+  if (!localEdits[task.id].confirmed) {
+    localEdits[task.id].confirmed = new Array(records.length).fill(false);
+  }
+  localEdits[task.id].confirmed[idx] = true;
+
+  saveLocal();
+  el.classList.add('changed');
+  el.closest('tr').classList.add('edited');
+
+  showSaved('local');
+}
+
+function cellKeydown(e, el) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    el.blur();
+    const idx = parseInt(el.dataset.idx);
+    const field = el.dataset.field;
+    const next = document.querySelector(`[data-field="${field}"][data-idx="${idx + 1}"]`);
+    if (next) next.focus();
+  }
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    el.blur();
+    const idx = parseInt(el.dataset.idx);
+    const fields = ['documento', 'nombre', 'destino'];
+    const fi = fields.indexOf(el.dataset.field);
+    if (e.shiftKey) {
+      if (fi > 0) {
+        const prev = document.querySelector(`[data-field="${fields[fi - 1]}"][data-idx="${idx}"]`);
+        if (prev) prev.focus();
+      } else if (idx > 0) {
+        const prev = document.querySelector(`[data-field="${fields[fields.length - 1]}"][data-idx="${idx - 1}"]`);
+        if (prev) prev.focus();
+      }
+    } else {
+      if (fi < fields.length - 1) {
+        const next = document.querySelector(`[data-field="${fields[fi + 1]}"][data-idx="${idx}"]`);
+        if (next) next.focus();
+      } else {
+        const next = document.querySelector(`[data-field="${fields[0]}"][data-idx="${idx + 1}"]`);
+        if (next) next.focus();
+      }
+    }
+  }
+  if (e.key === 'Escape') {
+    el.blur();
+  }
+}
+
+// ============================================================
+// ADD ROW
+// ============================================================
+function addRow() {
+  if (currentTaskIdx === null) return;
+  const task = allTasks[currentTaskIdx];
+  const records = getTaskRecords(currentTaskIdx);
+
+  if (!localEdits[task.id]) {
+    localEdits[task.id] = {
+      records: JSON.parse(JSON.stringify(records)),
+      confirmed: new Array(records.length).fill(false),
+    };
+  }
+
+  const newRow = {
+    row: localEdits[task.id].records.length + 1,
+    tipo: 'DNI',
+    documento: '',
+    nombre: '',
+    destino: '',
+    _changed: true,
+  };
+
+  localEdits[task.id].records.push(newRow);
+  localEdits[task.id].confirmed.push(true);
+
+  saveLocal();
+  renderData();
+
+  setTimeout(() => {
+    const newCell = document.querySelector(`[data-field="documento"][data-idx="${localEdits[task.id].records.length - 1}"]`);
+    if (newCell) {
+      newCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      newCell.focus();
+    }
+  }, 50);
+}
+
+// ============================================================
+// COMPLETE TASK
+// ============================================================
+async function completeTask() {
+  if (currentTaskIdx === null) return;
+  const task = allTasks[currentTaskIdx];
+  const records = getTaskRecords(currentTaskIdx);
+
+  // Save to Firestore
+  if (firestoreReady) {
+    try {
+      // Clean records for Firestore (remove _changed)
+      const cleanRecords = records.map(r => ({
+        tipo: r.tipo || 'DNI',
+        documento: r.documento || '',
+        nombre: r.nombre || '',
+        destino: r.destino || '',
+      }));
+
+      // Save result
+      await window._setDoc(window._doc(window._db, 'verificacion_results', task.id), {
+        image: task.image,
+        records: cleanRecords,
+        total_records: cleanRecords.length,
+        volunteer_id: volunteerId,
+        volunteer_name: volunteerName,
+        completed_at: Date.now(),
+      });
+
+      // Mark task as done
+      await window._setDoc(window._doc(window._db, 'verificacion_tasks', task.id), {
+        status: 'done',
+        volunteer_id: volunteerId,
+        volunteer_name: volunteerName,
+        completed_at: Date.now(),
+        total_records: cleanRecords.length,
+      });
+
+      showSaved('Firestore');
+      setStatus(`Pagina ${currentTaskIdx + 1} completada y guardada`);
+    } catch(e) {
+      console.error('complete error:', e);
+      showSaved('Error: ' + e.message);
+      return;
+    }
+  }
+
+  updateNavButtons();
+  updateProgress();
+  updateMyCount();
+
+  // Auto-advance to next unclaimed task
+  setTimeout(() => {
+    for (let i = currentTaskIdx + 1; i < allTasks.length; i++) {
+      const st = taskStatus[allTasks[i].id];
+      if (!st || st.status !== 'done') {
+        selectTask(i);
+        return;
+      }
+    }
+    setStatus('No hay mas paginas pendientes. Gracias!');
+  }, 500);
+}
+
+// ============================================================
+// PERSISTENCE
+// ============================================================
+function saveLocal() {
+  try {
+    localStorage.setItem(LS_KEY_EDITS, JSON.stringify(localEdits));
+  } catch(e) {}
+}
+
+function showSaved(where) {
+  const el = document.getElementById('save-status');
+  el.innerHTML = `<span class="save-ok">Guardado (${where})</span>`;
+  setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  if (e.target.isContentEditable || e.target.tagName === 'INPUT') return;
+
+  if (e.key === 'ArrowLeft') {
+    prevTask();
+  } else if (e.key === 'ArrowRight') {
+    nextTask();
+  } else if (e.key === 'Enter' && e.ctrlKey) {
+    completeTask();
+  }
+});
+
+// Enter on onboarding input
+document.getElementById('volunteer-name-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') startVolunteer();
+});
+
+// ============================================================
+// UTILS
+// ============================================================
+function setStatus(msg) {
+  document.getElementById('status-msg').textContent = msg;
+}
+
+// ============================================================
+// GO
+// ============================================================
+init();
+</script>
+</body>
+</html>

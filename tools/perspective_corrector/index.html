@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perspective Corrector</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* --- Header --- */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #16213e;
+  border-bottom: 1px solid #0f3460;
+  flex-shrink: 0;
+}
+header h1 { font-size: 16px; font-weight: 600; color: #e94560; }
+#progress { font-size: 14px; color: #a0a0a0; }
+#progress strong { color: #e94560; }
+.shortcuts {
+  font-size: 11px;
+  color: #666;
+}
+.shortcuts kbd {
+  background: #2a2a4a;
+  border: 1px solid #444;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: monospace;
+  color: #aaa;
+}
+
+/* --- Main layout --- */
+main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* --- Sidebar --- */
+#sidebar {
+  width: 240px;
+  background: #16213e;
+  border-right: 1px solid #0f3460;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+#sidebar .filter-bar {
+  padding: 6px 8px;
+  border-bottom: 1px solid #0f3460;
+  display: flex;
+  gap: 4px;
+}
+#sidebar .filter-bar button {
+  flex: 1;
+  padding: 4px;
+  font-size: 11px;
+  background: #2a2a4a;
+  color: #aaa;
+  border: 1px solid #444;
+  border-radius: 3px;
+  cursor: pointer;
+}
+#sidebar .filter-bar button.active {
+  background: #0f3460;
+  color: #e94560;
+  border-color: #e94560;
+}
+.img-item {
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #1a1a2e;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.img-item:hover { background: #1a2744; }
+.img-item.active { background: #0f3460; color: #fff; }
+.img-item .check { color: #4caf50; font-size: 14px; min-width: 16px; }
+.img-item .pending { color: #555; font-size: 14px; min-width: 16px; }
+.img-item .name { overflow: hidden; text-overflow: ellipsis; }
+
+/* --- Workspace --- */
+#workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+#canvas-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+}
+#canvas {
+  cursor: crosshair;
+}
+#canvas.dragging { cursor: grabbing; }
+
+/* Floating status */
+#status-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.75);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  pointer-events: none;
+}
+#status-overlay .label { color: #888; }
+#status-overlay .value { color: #e94560; font-weight: 600; }
+
+/* Preview overlay */
+#preview-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+#preview-overlay.visible { display: flex; }
+#preview-overlay img {
+  max-width: 95%;
+  max-height: 95%;
+  object-fit: contain;
+  border: 2px solid #333;
+}
+#preview-label {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #4caf50;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* --- Controls bar --- */
+#controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #16213e;
+  border-top: 1px solid #0f3460;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.btn-group { display: flex; gap: 6px; }
+
+button {
+  padding: 6px 14px;
+  font-size: 13px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #2a2a4a;
+  color: #ddd;
+  transition: all 0.15s;
+}
+button:hover { background: #3a3a5a; border-color: #666; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button.primary {
+  background: #e94560;
+  border-color: #e94560;
+  color: #fff;
+  font-weight: 600;
+}
+button.primary:hover { background: #d63851; }
+button.primary:disabled { background: #5a2030; border-color: #5a2030; }
+button.success {
+  background: #2e7d32;
+  border-color: #2e7d32;
+  color: #fff;
+}
+button.success:hover { background: #388e3c; }
+
+#image-info {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  flex: 1;
+}
+
+/* Loading spinner */
+.loading {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: #666;
+  font-size: 14px;
+}
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2e7d32;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 100;
+}
+#toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Perspective Corrector</h1>
+  <div class="shortcuts">
+    <kbd>1-4</kbd> puntos
+    <kbd>R</kbd> reset
+    <kbd>P</kbd> preview
+    <kbd>S</kbd> guardar
+    <kbd>←</kbd><kbd>→</kbd> navegar
+    <kbd>Esc</kbd> cerrar preview
+  </div>
+  <div id="progress">
+    <strong id="count-done">0</strong> / <span id="count-total">0</span> procesadas
+  </div>
+</header>
+
+<main>
+  <div id="sidebar">
+    <div class="filter-bar">
+      <button id="filter-all" class="active" onclick="setFilter('all')">Todas</button>
+      <button id="filter-pending" onclick="setFilter('pending')">Pendientes</button>
+      <button id="filter-done" onclick="setFilter('done')">Hechas</button>
+    </div>
+    <div id="image-list"></div>
+  </div>
+
+  <div id="workspace">
+    <div id="canvas-container">
+      <canvas id="canvas"></canvas>
+      <div id="status-overlay">
+        <span class="label">Puntos: </span>
+        <span class="value" id="point-count">0/4</span>
+      </div>
+      <div id="preview-overlay">
+        <div id="preview-label">Preview — Esc para cerrar, S para guardar</div>
+        <img id="preview-img">
+      </div>
+      <div class="loading" id="loading" style="display:none">Cargando...</div>
+    </div>
+
+    <div id="controls">
+      <div class="btn-group">
+        <button onclick="prevImage()" title="Imagen anterior (←)">← Anterior</button>
+        <button onclick="nextImage()" title="Imagen siguiente (→)">Siguiente →</button>
+      </div>
+
+      <div id="image-info">—</div>
+
+      <div class="btn-group">
+        <button onclick="resetPoints()" title="Reset puntos (R)">Reset</button>
+        <button onclick="undoPoint()" title="Deshacer último punto (Z)">Deshacer</button>
+        <button id="btn-preview" onclick="doPreview()" disabled title="Preview (P)">Preview</button>
+        <button id="btn-save" class="primary" onclick="doSave()" disabled title="Guardar y siguiente (S)">
+          Guardar & Siguiente
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// State
+// ============================================================
+let images = [];
+let currentIndex = -1;
+let points = [];           // [{x, y}, ...] in IMAGE coordinates
+let dragging = null;        // index of point being dragged
+let imgEl = null;           // loaded Image element
+let scale = 1;              // canvas-to-image scale
+let offsetX = 0, offsetY = 0; // image offset on canvas
+let filter = 'all';
+let lastPoints = null;      // remember last saved points for reuse
+let previewVisible = false;
+
+const POINT_RADIUS = 7;
+const SNAP_RADIUS = 14;
+const COLORS = ['#e94560', '#4caf50', '#2196f3', '#ff9800'];
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('canvas-container');
+
+// ============================================================
+// Init
+// ============================================================
+async function init() {
+  const resp = await fetch('/api/images');
+  images = await resp.json();
+  renderSidebar();
+  updateProgress();
+
+  // Start at first unprocessed
+  const firstPending = images.findIndex(i => !i.processed);
+  loadImage(firstPending >= 0 ? firstPending : 0);
+}
+
+// ============================================================
+// Sidebar
+// ============================================================
+function renderSidebar() {
+  const list = document.getElementById('image-list');
+  list.innerHTML = '';
+  images.forEach((img, i) => {
+    if (filter === 'pending' && img.processed) return;
+    if (filter === 'done' && !img.processed) return;
+
+    const div = document.createElement('div');
+    div.className = 'img-item' + (i === currentIndex ? ' active' : '');
+    div.innerHTML = `
+      <span class="${img.processed ? 'check' : 'pending'}">${img.processed ? '✓' : '○'}</span>
+      <span class="name" title="${img.name}">${img.name}</span>
+    `;
+    div.onclick = () => loadImage(i);
+    list.appendChild(div);
+  });
+}
+
+function setFilter(f) {
+  filter = f;
+  document.querySelectorAll('.filter-bar button').forEach(b => b.classList.remove('active'));
+  document.getElementById('filter-' + f).classList.add('active');
+  renderSidebar();
+}
+
+function updateProgress() {
+  const done = images.filter(i => i.processed).length;
+  document.getElementById('count-done').textContent = done;
+  document.getElementById('count-total').textContent = images.length;
+}
+
+// ============================================================
+// Image loading
+// ============================================================
+function loadImage(index) {
+  if (index < 0 || index >= images.length) return;
+  currentIndex = index;
+  points = [];
+  previewVisible = false;
+  document.getElementById('preview-overlay').classList.remove('visible');
+
+  const info = images[index];
+  document.getElementById('image-info').textContent =
+    `${info.name}  (${index + 1}/${images.length})`;
+  document.getElementById('loading').style.display = 'block';
+
+  imgEl = new Image();
+  imgEl.onload = () => {
+    document.getElementById('loading').style.display = 'none';
+    fitCanvas();
+    render();
+
+    // If we have last points from a previous save, offer to reuse
+    if (lastPoints && !info.processed) {
+      points = lastPoints.map(p => ({...p}));
+      updateButtons();
+      render();
+    }
+  };
+  imgEl.src = '/images/' + encodeURIComponent(info.name);
+  renderSidebar();
+  updateButtons();
+}
+
+function fitCanvas() {
+  const rect = container.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+
+  if (!imgEl) return;
+
+  const scaleX = rect.width / imgEl.naturalWidth;
+  const scaleY = rect.height / imgEl.naturalHeight;
+  scale = Math.min(scaleX, scaleY) * 0.95; // 5% margin
+
+  offsetX = (rect.width - imgEl.naturalWidth * scale) / 2;
+  offsetY = (rect.height - imgEl.naturalHeight * scale) / 2;
+}
+
+// ============================================================
+// Rendering
+// ============================================================
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!imgEl || !imgEl.complete) return;
+
+  // Draw image
+  ctx.drawImage(imgEl,
+    offsetX, offsetY,
+    imgEl.naturalWidth * scale,
+    imgEl.naturalHeight * scale
+  );
+
+  // Draw quadrilateral fill
+  if (points.length >= 3) {
+    ctx.beginPath();
+    const p0 = toCanvas(points[0]);
+    ctx.moveTo(p0.x, p0.y);
+    for (let i = 1; i < points.length; i++) {
+      const p = toCanvas(points[i]);
+      ctx.lineTo(p.x, p.y);
+    }
+    if (points.length === 4) ctx.closePath();
+    ctx.fillStyle = 'rgba(233, 69, 96, 0.08)';
+    ctx.fill();
+  }
+
+  // Draw lines
+  if (points.length >= 2) {
+    ctx.beginPath();
+    const p0 = toCanvas(points[0]);
+    ctx.moveTo(p0.x, p0.y);
+    for (let i = 1; i < points.length; i++) {
+      const p = toCanvas(points[i]);
+      ctx.lineTo(p.x, p.y);
+    }
+    if (points.length === 4) ctx.closePath();
+    ctx.strokeStyle = 'rgba(233, 69, 96, 0.7)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw points
+  for (let i = 0; i < points.length; i++) {
+    const p = toCanvas(points[i]);
+
+    // Outer ring
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, POINT_RADIUS + 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fill();
+
+    // Point
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, POINT_RADIUS, 0, Math.PI * 2);
+    ctx.fillStyle = COLORS[i];
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(i + 1), p.x, p.y);
+  }
+
+  // Update point counter
+  document.getElementById('point-count').textContent = `${points.length}/4`;
+}
+
+// ============================================================
+// Coordinate transforms
+// ============================================================
+function toCanvas(pt) {
+  return { x: pt.x * scale + offsetX, y: pt.y * scale + offsetY };
+}
+
+function toImage(cx, cy) {
+  return { x: (cx - offsetX) / scale, y: (cy - offsetY) / scale };
+}
+
+function getCanvasXY(e) {
+  const rect = canvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+// ============================================================
+// Mouse interaction
+// ============================================================
+canvas.addEventListener('mousedown', (e) => {
+  if (previewVisible) return;
+  if (e.button !== 0) return; // left click only
+  const { x, y } = getCanvasXY(e);
+
+  // Check if clicking near existing point
+  for (let i = 0; i < points.length; i++) {
+    const p = toCanvas(points[i]);
+    const dist = Math.hypot(p.x - x, p.y - y);
+    if (dist < SNAP_RADIUS) {
+      dragging = i;
+      canvas.classList.add('dragging');
+      return;
+    }
+  }
+
+  // Add new point
+  if (points.length < 4) {
+    const imgPt = toImage(x, y);
+    // Clamp to image bounds
+    imgPt.x = Math.max(0, Math.min(imgEl.naturalWidth, imgPt.x));
+    imgPt.y = Math.max(0, Math.min(imgEl.naturalHeight, imgPt.y));
+    points.push(imgPt);
+    updateButtons();
+    render();
+  }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (dragging === null) return;
+  const { x, y } = getCanvasXY(e);
+  const imgPt = toImage(x, y);
+  imgPt.x = Math.max(0, Math.min(imgEl.naturalWidth, imgPt.x));
+  imgPt.y = Math.max(0, Math.min(imgEl.naturalHeight, imgPt.y));
+  points[dragging] = imgPt;
+  render();
+});
+
+canvas.addEventListener('mouseup', () => {
+  if (dragging !== null) {
+    dragging = null;
+    canvas.classList.remove('dragging');
+  }
+});
+
+// Right-click to remove nearest point
+canvas.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  if (previewVisible) return;
+  const { x, y } = getCanvasXY(e);
+  let closest = -1, minDist = SNAP_RADIUS * 2;
+  for (let i = 0; i < points.length; i++) {
+    const p = toCanvas(points[i]);
+    const dist = Math.hypot(p.x - x, p.y - y);
+    if (dist < minDist) { minDist = dist; closest = i; }
+  }
+  if (closest >= 0) {
+    points.splice(closest, 1);
+    updateButtons();
+    render();
+  }
+});
+
+// ============================================================
+// Keyboard shortcuts
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  // Don't handle if typing in input
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  switch (e.key) {
+    case 'ArrowLeft':
+      e.preventDefault();
+      prevImage();
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      nextImage();
+      break;
+    case 'r':
+    case 'R':
+      resetPoints();
+      break;
+    case 'z':
+    case 'Z':
+      undoPoint();
+      break;
+    case 'p':
+    case 'P':
+      if (points.length === 4) doPreview();
+      break;
+    case 's':
+    case 'S':
+      if (points.length === 4) doSave();
+      break;
+    case 'Escape':
+      closePreview();
+      break;
+    case 'n':
+    case 'N':
+      nextUnprocessed();
+      break;
+  }
+});
+
+// ============================================================
+// Actions
+// ============================================================
+function prevImage() {
+  if (currentIndex > 0) loadImage(currentIndex - 1);
+}
+
+function nextImage() {
+  if (currentIndex < images.length - 1) loadImage(currentIndex + 1);
+}
+
+function nextUnprocessed() {
+  for (let i = currentIndex + 1; i < images.length; i++) {
+    if (!images[i].processed) { loadImage(i); return; }
+  }
+  // Wrap around
+  for (let i = 0; i < currentIndex; i++) {
+    if (!images[i].processed) { loadImage(i); return; }
+  }
+  showToast('Todas las imágenes están procesadas!');
+}
+
+function resetPoints() {
+  points = [];
+  closePreview();
+  updateButtons();
+  render();
+}
+
+function undoPoint() {
+  if (points.length > 0) {
+    points.pop();
+    updateButtons();
+    render();
+  }
+}
+
+function updateButtons() {
+  const has4 = points.length === 4;
+  document.getElementById('btn-preview').disabled = !has4;
+  document.getElementById('btn-save').disabled = !has4;
+}
+
+async function doPreview() {
+  if (points.length !== 4) return;
+  const name = images[currentIndex].name;
+
+  showToast('Generando preview...');
+
+  const resp = await fetch('/api/preview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      image: name,
+      points: points.map(p => [p.x, p.y]),
+    }),
+  });
+
+  const data = await resp.json();
+  const previewImg = document.getElementById('preview-img');
+  previewImg.src = data.preview;
+  previewVisible = true;
+  document.getElementById('preview-overlay').classList.add('visible');
+}
+
+function closePreview() {
+  previewVisible = false;
+  document.getElementById('preview-overlay').classList.remove('visible');
+}
+
+async function doSave() {
+  if (points.length !== 4) return;
+  const name = images[currentIndex].name;
+
+  document.getElementById('btn-save').disabled = true;
+  document.getElementById('btn-save').textContent = 'Guardando...';
+
+  const resp = await fetch('/api/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      image: name,
+      points: points.map(p => [p.x, p.y]),
+    }),
+  });
+
+  const data = await resp.json();
+
+  // Mark as processed
+  images[currentIndex].processed = true;
+  lastPoints = points.map(p => ({...p})); // remember for next
+
+  document.getElementById('btn-save').textContent = 'Guardar & Siguiente';
+
+  updateProgress();
+  renderSidebar();
+  showToast(`Guardada: ${name} (${data.processed}/${data.total})`);
+
+  // Auto-advance to next unprocessed
+  closePreview();
+  setTimeout(() => nextUnprocessed(), 300);
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// Resize handling
+// ============================================================
+window.addEventListener('resize', () => {
+  fitCanvas();
+  render();
+});
+
+// ============================================================
+// Start
+// ============================================================
+init();
+</script>
+</body>
+</html>

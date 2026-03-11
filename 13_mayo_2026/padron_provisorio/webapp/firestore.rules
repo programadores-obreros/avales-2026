@@ -4,5 +4,17 @@ service cloud.firestore {
     match /edits/{pageId} {
       allow read, write: if true;
     }
+    match /verificacion_tasks/{taskId} {
+      allow read, write: if true;
+    }
+    match /verificacion_results/{taskId} {
+      allow read, write: if true;
+    }
+    match /verificacion_volunteers/{volId} {
+      allow read, write: if true;
+    }
+    match /verificacion_progress/{docId} {
+      allow read, write: if true;
+    }
   }
 }
