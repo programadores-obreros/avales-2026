@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avales — Tests</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, monospace; padding: 20px; background: #1e1e2e; color: #cdd6f4; }
+h1 { font-size: 1.2rem; margin-bottom: 16px; color: #89b4fa; }
+.suite { margin-bottom: 24px; }
+.suite-name { font-size: 0.9rem; font-weight: 700; color: #cba6f7; margin-bottom: 8px; }
+.test { padding: 6px 12px; border-radius: 6px; margin-bottom: 4px; font-size: 0.82rem; display: flex; align-items: center; gap: 8px; }
+.test.pass { background: #1e3a2e; color: #a6e3a1; }
+.test.fail { background: #3a1e1e; color: #f38ba8; }
+.test .icon { font-size: 1rem; }
+.test .detail { font-size: 0.75rem; opacity: .7; margin-left: auto; }
+.summary { margin-top: 20px; padding: 16px; border-radius: 8px; font-weight: 700; font-size: 0.95rem; }
+.summary.all-pass { background: #1e3a2e; color: #a6e3a1; }
+.summary.has-fail { background: #3a1e1e; color: #f38ba8; }
+</style>
+</head>
+<body>
+<h1>avales.html — Test Suite</h1>
+<div id="results"></div>
+<div id="summary" class="summary"></div>
+
+<script>
+// =====================================================================
+// Test framework
+// =====================================================================
+const suites = [];
+let currentSuite = null;
+
+function describe(name, fn) {
+  currentSuite = { name, tests: [] };
+  suites.push(currentSuite);
+  fn();
+  currentSuite = null;
+}
+
+function it(name, fn) {
+  try {
+    fn();
+    currentSuite.tests.push({ name, pass: true });
+  } catch (e) {
+    currentSuite.tests.push({ name, pass: false, error: e.message });
+  }
+}
+
+function expect(val) {
+  return {
+    toBe(expected) {
+      if (val !== expected) throw new Error('Expected ' + JSON.stringify(expected) + ', got ' + JSON.stringify(val));
+    },
+    toEqual(expected) {
+      if (JSON.stringify(val) !== JSON.stringify(expected))
+        throw new Error('Expected ' + JSON.stringify(expected) + ', got ' + JSON.stringify(val));
+    },
+    toBeGreaterThan(n) {
+      if (!(val > n)) throw new Error('Expected ' + val + ' > ' + n);
+    },
+    toBeLessThan(n) {
+      if (!(val < n)) throw new Error('Expected ' + val + ' < ' + n);
+    },
+    toContain(sub) {
+      if (typeof val === 'string' && !val.includes(sub)) throw new Error('Expected string to contain ' + JSON.stringify(sub));
+      if (Array.isArray(val) && !val.includes(sub)) throw new Error('Expected array to contain ' + JSON.stringify(sub));
+    },
+    toBeTruthy() {
+      if (!val) throw new Error('Expected truthy, got ' + JSON.stringify(val));
+    },
+    toBeFalsy() {
+      if (val) throw new Error('Expected falsy, got ' + JSON.stringify(val));
+    },
+    toHaveLength(n) {
+      if (val.length !== n) throw new Error('Expected length ' + n + ', got ' + val.length);
+    },
+    toBeInstanceOf(cls) {
+      if (!(val instanceof cls)) throw new Error('Expected instance of ' + cls.name);
+    }
+  };
+}
+
+// =====================================================================
+// Helpers (copy from avales.html to test independently)
+// =====================================================================
+function getType(esc) {
+  if (!esc || esc === 'JUBILADO/A' || esc === 'AP. EN SEDE') return esc || '';
+  const parts = esc.split('-');
+  return parts.length >= 3 ? parts[2] : '';
+}
+function getBadgeClass(type) {
+  const map = { PP:'badge-pp', MS:'badge-ms', JI:'badge-ji', IS:'badge-is',
+    DM:'badge-dm', MT:'badge-mt', EE:'badge-ee', 'JUBILADO/A':'badge-jub' };
+  return map[type] || 'badge-other';
+}
+function pageToImage(p) {
+  if (!p || p <= 0) return '';
+  return 'data/procesadas/pag_' + String(p).padStart(4, '0') + '.png';
+}
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function highlightMatch(text, q) {
+  if (!q) return text;
+  const idx = text.toUpperCase().indexOf(q.toUpperCase());
+  if (idx === -1) return text;
+  return text.substring(0, idx) + '<mark>' + text.substring(idx, idx + q.length) + '</mark>' + text.substring(idx + q.length);
+}
+function indexData(DATA) {
+  const BY_ESCUELA = {};
+  for (const r of DATA) {
+    const esc = r.e || 'SIN ESCUELA';
+    (BY_ESCUELA[esc] = BY_ESCUELA[esc] || []).push(r);
+  }
+  return BY_ESCUELA;
+}
+
+// =====================================================================
+// Tests
+// =====================================================================
+
+describe('getType()', () => {
+  it('extracts PP from school code', () => {
+    expect(getType('0-069-PP-0145')).toBe('PP');
+  });
+  it('extracts MS from school code', () => {
+    expect(getType('0-069-MS-0001')).toBe('MS');
+  });
+  it('extracts JI from school code', () => {
+    expect(getType('0-069-JI-0905')).toBe('JI');
+  });
+  it('returns JUBILADO/A for jubilados', () => {
+    expect(getType('JUBILADO/A')).toBe('JUBILADO/A');
+  });
+  it('returns AP. EN SEDE for sede', () => {
+    expect(getType('AP. EN SEDE')).toBe('AP. EN SEDE');
+  });
+  it('returns empty string for empty input', () => {
+    expect(getType('')).toBe('');
+  });
+  it('returns empty string for null', () => {
+    expect(getType(null)).toBe('');
+  });
+  it('handles code with fewer parts', () => {
+    expect(getType('0-069')).toBe('');
+  });
+});
+
+describe('getBadgeClass()', () => {
+  it('returns badge-pp for PP', () => {
+    expect(getBadgeClass('PP')).toBe('badge-pp');
+  });
+  it('returns badge-ms for MS', () => {
+    expect(getBadgeClass('MS')).toBe('badge-ms');
+  });
+  it('returns badge-dm for DM', () => {
+    expect(getBadgeClass('DM')).toBe('badge-dm');
+  });
+  it('returns badge-other for unknown type', () => {
+    expect(getBadgeClass('ZZ')).toBe('badge-other');
+  });
+  it('returns badge-jub for JUBILADO/A', () => {
+    expect(getBadgeClass('JUBILADO/A')).toBe('badge-jub');
+  });
+});
+
+describe('pageToImage()', () => {
+  it('converts page 1 to pag_0001.png', () => {
+    expect(pageToImage(1)).toBe('data/procesadas/pag_0001.png');
+  });
+  it('converts page 148 to pag_0148.png', () => {
+    expect(pageToImage(148)).toBe('data/procesadas/pag_0148.png');
+  });
+  it('returns empty for page 0', () => {
+    expect(pageToImage(0)).toBe('');
+  });
+  it('returns empty for negative page', () => {
+    expect(pageToImage(-1)).toBe('');
+  });
+  it('returns empty for null', () => {
+    expect(pageToImage(null)).toBe('');
+  });
+  it('handles large page numbers', () => {
+    expect(pageToImage(9876)).toBe('data/procesadas/pag_9876.png');
+  });
+});
+
+describe('escapeHtml()', () => {
+  it('escapes ampersand', () => {
+    expect(escapeHtml('A & B')).toBe('A &amp; B');
+  });
+  it('escapes less than', () => {
+    expect(escapeHtml('<script>')).toBe('&lt;script&gt;');
+  });
+  it('handles normal text unchanged', () => {
+    expect(escapeHtml('PEREZ MARIA')).toBe('PEREZ MARIA');
+  });
+  it('handles empty string', () => {
+    expect(escapeHtml('')).toBe('');
+  });
+});
+
+describe('highlightMatch()', () => {
+  it('wraps matching text in <mark>', () => {
+    expect(highlightMatch('PEREZ MARIA', 'PEREZ')).toContain('<mark>PEREZ</mark>');
+  });
+  it('is case insensitive', () => {
+    expect(highlightMatch('PEREZ MARIA', 'perez')).toContain('<mark>PEREZ</mark>');
+  });
+  it('returns original text if no match', () => {
+    expect(highlightMatch('PEREZ MARIA', 'GOMEZ')).toBe('PEREZ MARIA');
+  });
+  it('returns original text for empty query', () => {
+    expect(highlightMatch('PEREZ MARIA', '')).toBe('PEREZ MARIA');
+  });
+  it('highlights DNI matches', () => {
+    const result = highlightMatch('28191198', '2819');
+    expect(result).toContain('<mark>2819</mark>');
+  });
+});
+
+describe('indexData()', () => {
+  const MOCK = [
+    { d: '1', n: 'A', e: '0-069-PP-0001', p: 1 },
+    { d: '2', n: 'B', e: '0-069-PP-0001', p: 1 },
+    { d: '3', n: 'C', e: '0-069-MS-0010', p: 2 },
+    { d: '4', n: 'D', e: 'JUBILADO/A', p: 3 },
+    { d: '5', n: 'E', e: '', p: 4 },
+  ];
+
+  it('groups records by escuela', () => {
+    const idx = indexData(MOCK);
+    expect(idx['0-069-PP-0001'].length).toBe(2);
+  });
+  it('handles JUBILADO/A', () => {
+    const idx = indexData(MOCK);
+    expect(idx['JUBILADO/A'].length).toBe(1);
+  });
+  it('groups empty escuela as SIN ESCUELA', () => {
+    const idx = indexData(MOCK);
+    expect(idx['SIN ESCUELA'].length).toBe(1);
+  });
+  it('preserves all records', () => {
+    const idx = indexData(MOCK);
+    let total = 0;
+    for (const k in idx) total += idx[k].length;
+    expect(total).toBe(5);
+  });
+});
+
+describe('Search logic', () => {
+  const MOCK = [
+    { d: '28191198', n: 'PEREZ MARIA', e: '0-069-PP-0001', p: 1 },
+    { d: '28191200', n: 'PEREZ JUAN', e: '0-069-MS-0010', p: 2 },
+    { d: '12345678', n: 'GOMEZ ANA', e: 'JUBILADO/A', p: 3 },
+    { d: '99887766', n: 'LOPEZ PEDRO', e: '0-069-JI-0905', p: 4 },
+  ];
+
+  it('finds by DNI prefix', () => {
+    const q = '2819';
+    const results = MOCK.filter(r => r.d.includes(q));
+    expect(results.length).toBe(2);
+  });
+  it('finds by name substring', () => {
+    const q = 'PEREZ';
+    const results = MOCK.filter(r => r.n.includes(q));
+    expect(results.length).toBe(2);
+  });
+  it('returns empty for no match', () => {
+    const results = MOCK.filter(r => r.n.includes('ZZZZZ'));
+    expect(results.length).toBe(0);
+  });
+  it('searches are case insensitive for names', () => {
+    const q = 'gomez';
+    const results = MOCK.filter(r => r.n.includes(q.toUpperCase()));
+    expect(results.length).toBe(1);
+  });
+});
+
+describe('Escuela filtering', () => {
+  const MOCK_ESC = [
+    { code: '0-069-PP-0001', type: 'PP', count: 15 },
+    { code: '0-069-PP-0002', type: 'PP', count: 10 },
+    { code: '0-069-MS-0010', type: 'MS', count: 20 },
+    { code: 'JUBILADO/A', type: 'JUBILADO/A', count: 100 },
+    { code: 'SIN ESCUELA', type: '', count: 5 },
+  ];
+
+  it('filters by type PP', () => {
+    const filtered = MOCK_ESC.filter(e => e.type === 'PP');
+    expect(filtered.length).toBe(2);
+  });
+  it('filters JUBILADO/A by code', () => {
+    const filtered = MOCK_ESC.filter(e => e.code === 'JUBILADO/A');
+    expect(filtered.length).toBe(1);
+  });
+  it('excludes SIN ESCUELA', () => {
+    const filtered = MOCK_ESC.filter(e => e.code !== 'SIN ESCUELA');
+    expect(filtered.length).toBe(4);
+  });
+  it('search by code substring', () => {
+    const sv = 'PP-0001';
+    const filtered = MOCK_ESC.filter(e => e.code.includes(sv));
+    expect(filtered.length).toBe(1);
+  });
+});
+
+describe('PDF generation prerequisites', () => {
+  it('jsPDF library is available', () => {
+    expect(typeof window.jspdf).toBe('object');
+  });
+  it('jsPDF constructor exists', () => {
+    expect(typeof window.jspdf.jsPDF).toBe('function');
+  });
+  it('autoTable plugin is loaded', () => {
+    const doc = new window.jspdf.jsPDF();
+    expect(typeof doc.autoTable).toBe('function');
+  });
+  it('can create a basic PDF', () => {
+    const doc = new window.jspdf.jsPDF();
+    doc.text('Test', 10, 10);
+    const output = doc.output('arraybuffer');
+    expect(output.byteLength).toBeGreaterThan(0);
+  });
+  it('can create a PDF with table', () => {
+    const doc = new window.jspdf.jsPDF();
+    doc.autoTable({
+      head: [['#', 'DNI', 'Nombre']],
+      body: [[1, '28191198', 'PEREZ MARIA']],
+    });
+    const output = doc.output('arraybuffer');
+    expect(output.byteLength).toBeGreaterThan(0);
+  });
+});
+
+describe('Data integrity (live fetch)', () => {
+  // These tests require the data file to be available
+  it('padron_avales.json loads successfully', async () => {
+    try {
+      const res = await fetch('data/padron_avales.json');
+      expect(res.ok).toBe(true);
+    } catch (e) {
+      throw new Error('Failed to fetch: ' + e.message);
+    }
+  });
+  it('JSON has array with 9000+ records', async () => {
+    const res = await fetch('data/padron_avales.json');
+    const data = await res.json();
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.length).toBeGreaterThan(9000);
+  });
+  it('records have required fields (d, n, e, p)', async () => {
+    const res = await fetch('data/padron_avales.json');
+    const data = await res.json();
+    const r = data[0];
+    expect('d' in r).toBe(true);
+    expect('n' in r).toBe(true);
+    expect('e' in r).toBe(true);
+    expect('p' in r).toBe(true);
+  });
+  it('all records have non-empty DNI', async () => {
+    const res = await fetch('data/padron_avales.json');
+    const data = await res.json();
+    const empty = data.filter(r => !r.d || r.d.trim() === '');
+    expect(empty.length).toBe(0);
+  });
+});
+
+// =====================================================================
+// Run & render
+// =====================================================================
+async function runTests() {
+  // Wait for async tests
+  for (const suite of suites) {
+    for (const test of suite.tests) {
+      if (test.promise) await test.promise;
+    }
+  }
+
+  // Run async suites
+  const asyncSuites = suites.filter(s => s.name.includes('live'));
+  for (const suite of asyncSuites) {
+    suite.tests = [];
+    // Re-run
+  }
+
+  const container = document.getElementById('results');
+  const summaryEl = document.getElementById('summary');
+  let totalPass = 0, totalFail = 0;
+
+  for (const suite of suites) {
+    let html = '<div class="suite"><div class="suite-name">' + suite.name + '</div>';
+    for (const test of suite.tests) {
+      if (test.pass) {
+        totalPass++;
+        html += '<div class="test pass"><span class="icon">&#10003;</span> ' + test.name + '</div>';
+      } else {
+        totalFail++;
+        html += '<div class="test fail"><span class="icon">&#10007;</span> ' + test.name +
+          '<span class="detail">' + (test.error || '') + '</span></div>';
+      }
+    }
+    html += '</div>';
+    container.innerHTML += html;
+  }
+
+  // Run async data tests separately
+  const asyncResults = document.createElement('div');
+  asyncResults.className = 'suite';
+  asyncResults.innerHTML = '<div class="suite-name">Data integrity (live fetch)</div>';
+
+  const asyncTests = [
+    { name: 'padron_avales.json loads successfully', fn: async () => {
+      const res = await fetch('data/padron_avales.json');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+    }},
+    { name: 'JSON has 9000+ records', fn: async () => {
+      const res = await fetch('data/padron_avales.json');
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length < 9000) throw new Error('Got ' + (data ? data.length : 0));
+    }},
+    { name: 'records have required fields', fn: async () => {
+      const res = await fetch('data/padron_avales.json');
+      const data = await res.json();
+      const r = data[0];
+      if (!('d' in r && 'n' in r && 'e' in r && 'p' in r)) throw new Error('Missing fields');
+    }},
+    { name: 'all DNIs are non-empty', fn: async () => {
+      const res = await fetch('data/padron_avales.json');
+      const data = await res.json();
+      const bad = data.filter(r => !r.d || !r.d.trim());
+      if (bad.length > 0) throw new Error(bad.length + ' empty DNIs');
+    }},
+  ];
+
+  for (const t of asyncTests) {
+    try {
+      await t.fn();
+      totalPass++;
+      asyncResults.innerHTML += '<div class="test pass"><span class="icon">&#10003;</span> ' + t.name + '</div>';
+    } catch (e) {
+      totalFail++;
+      asyncResults.innerHTML += '<div class="test fail"><span class="icon">&#10007;</span> ' + t.name +
+        '<span class="detail">' + e.message + '</span></div>';
+    }
+  }
+  container.appendChild(asyncResults);
+
+  summaryEl.className = 'summary ' + (totalFail === 0 ? 'all-pass' : 'has-fail');
+  summaryEl.textContent = (totalFail === 0 ? 'ALL TESTS PASSED' : totalFail + ' FAILED') +
+    ' — ' + totalPass + ' passed, ' + (totalPass + totalFail) + ' total';
+}
+
+runTests();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
+</body>
+</html>
