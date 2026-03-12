@@ -16,5 +16,8 @@ service cloud.firestore {
     match /verificacion_progress/{docId} {
       allow read, write: if true;
     }
+    match /planilla/{docId} {
+      allow read, write: if true;
+    }
   }
 }
