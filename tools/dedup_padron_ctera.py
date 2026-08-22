@@ -222,6 +222,65 @@ def run() -> None:
                 }
             )
 
+    n_antes_pasada2 = len(out)
+
+    # --- Segunda pasada: duplicados que cruzan archivo_origen dentro del
+    # MISMO sindicato (auditoría 2026-08-22, deuda técnica documentada tras
+    # el reimport a Firestore: la primera pasada agrupa por
+    # (dni, archivo_origen), así que la MISMA persona listada en DOS
+    # archivos-mesa distintos del mismo sindicato nunca se comparaba entre
+    # sí — quedaba como 2 registros. Casos confirmados: AGMER, ATECH, SUTE
+    # (~15 registros de 366k). Mismo criterio conservador que la primera
+    # pasada: solo fusiona si el nombre normalizado coincide EXACTO; si no,
+    # se deja como personas distintas para revisión manual.
+    groups2: dict[tuple, list[dict]] = {}
+    for r in out:
+        groups2.setdefault((r["dni"], r["sindicato"]), []).append(r)
+
+    out2: list[dict] = []
+    n_fusionados_cross_archivo = 0
+    n_sin_tocar_cross_archivo = 0
+    grupos_cross_sin_tocar_ejemplo: list[dict] = []
+
+    for (dni, sindicato), grupo in groups2.items():
+        if len(grupo) == 1:
+            out2.append(grupo[0])
+            continue
+
+        nombres = {nombre_comparable(r["apellido_nombre"]) for r in grupo}
+        if len(nombres) == 1:
+            mesas: list[str] = []
+            archivos: list[str] = []
+            for r in grupo:
+                mesas.extend(r.get("mesas_duplicadas") or [r["mesa"]])
+                archivos.append(r["archivo_origen"])
+            base = next((r for r in grupo if "," not in r["apellido_nombre"]), grupo[0])
+            r2 = dict(base)
+            r2["mesas_duplicadas"] = mesas
+            r2["archivos_duplicados"] = archivos
+            out2.append(r2)
+            n_fusionados_cross_archivo += len(grupo) - 1
+            continue
+
+        # nombres distintos con mismo dni+sindicato -> personas distintas
+        # (mismo patrón que BULACIOS/STRATTA, ver primera pasada) -> sin tocar
+        out2.extend(grupo)
+        n_sin_tocar_cross_archivo += 1
+        if len(grupos_cross_sin_tocar_ejemplo) < 5:
+            grupos_cross_sin_tocar_ejemplo.append(
+                {
+                    "dni": dni,
+                    "sindicato": sindicato,
+                    "nombres": [r["apellido_nombre"] for r in grupo],
+                    "archivos": [r["archivo_origen"] for r in grupo],
+                }
+            )
+
+    out = out2
+    print(f"\nSegunda pasada (cross-archivo, mismo sindicato): {n_antes_pasada2} -> {len(out)}")
+    print(f"  - fusionados cross-archivo: {n_fusionados_cross_archivo}")
+    print(f"  - grupos cross-archivo sin tocar: {n_sin_tocar_cross_archivo}")
+
     reporte = {
         "total_registros_entrada": len(records),
         "total_registros_salida": len(out),
@@ -232,7 +291,10 @@ def run() -> None:
         "grupos_multi_sin_tocar": n_sin_tocar_multi,
         "dni_corregido_por_match_cruzado": n_dni_corregido,
         "dni_sospechoso_9_digitos_sin_confirmar": n_dni_sospechoso,
+        "fusionados_cross_archivo_mismo_sindicato": n_fusionados_cross_archivo,
+        "grupos_cross_archivo_sin_tocar": n_sin_tocar_cross_archivo,
         "ejemplos_grupos_sin_tocar": grupos_sin_tocar_ejemplo,
+        "ejemplos_grupos_cross_archivo_sin_tocar": grupos_cross_sin_tocar_ejemplo,
     }
 
     with open(OUT_JSON, "w", encoding="utf-8") as f:
@@ -249,6 +311,8 @@ def run() -> None:
     print(f"Grupos multi SIN tocar (revisión manual): {n_sin_tocar_multi}")
     print(f"DNIs corregidos por match cruzado (9->8 dígitos): {n_dni_corregido}")
     print(f"DNIs sospechosos SIN confirmar (9 dígitos, sin tocar): {n_dni_sospechoso}")
+    print(f"Fusionados cross-archivo (mismo sindicato, 2da pasada): {n_fusionados_cross_archivo}")
+    print(f"Grupos cross-archivo SIN tocar (revisión manual): {n_sin_tocar_cross_archivo}")
     print(f"-> {OUT_JSON}")
     print(f"-> {OUT_REPORTE}")
 
