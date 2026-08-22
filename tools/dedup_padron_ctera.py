@@ -48,6 +48,21 @@ MESA_SUTEBA_RE = re.compile(r"^MESA\s+(\d+):\s*(.+?)\s*$", re.MULTILINE)
 VOTO_OBSERVADO_RE = re.compile(r"SOLO VOTO OBSERVADO", re.IGNORECASE)
 
 
+# Sufijo pegado al nombre en algunos PDF de SUTE (confirmado con bounding
+# boxes del PDF: es un objeto de texto SEPARADO, casi sin espacio, después
+# del nombre — dato real de la fuente, no un artefacto de extracción, pero
+# de significado desconocido). Auditoría 2026-08-22: 25 de 26 duplicados
+# cross-archivo de SUTE diferían SOLO en este sufijo. Solo se sacan
+# patrones inequívocamente seguros:
+#   - "PD" literal (confirmado con 3 casos verificados contra el PDF)
+#   - cualquier código con dígito (NINGÚN nombre real en español tiene
+#     dígitos, cero riesgo de comerse parte de un nombre)
+# Deliberadamente NO se sacan sufijos de 2 letras genéricos como "RE"
+# sueltos — hay apellidos reales que terminan así (TORRE, AGUIRRE...);
+# verificado que "PD" + dígito alcanza para resolver 25/26 sin esa regla.
+SUFIJO_FUENTE_RE = re.compile(r"\s*(PD|[A-ZÑ]{0,2}\d+)$")
+
+
 def nombre_comparable(nombre: str) -> str:
     """Clave de comparación para detectar 'misma persona, mismo DNI'.
 
@@ -57,7 +72,8 @@ def nombre_comparable(nombre: str) -> str:
     Confirmado en 4/27 casos de ADF (2026-08-21). Solo se usa para comparar;
     el campo `apellido_nombre` guardado en el registro NO se toca.
     """
-    return re.sub(r"\s{2,}", " ", nombre.replace(",", " ")).strip().upper()
+    limpio = re.sub(r"\s{2,}", " ", nombre.replace(",", " ")).strip().upper()
+    return SUFIJO_FUENTE_RE.sub("", limpio).strip()
 
 
 def pdf_to_text(path: Path) -> str:
