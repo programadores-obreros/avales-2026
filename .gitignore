@@ -41,3 +41,7 @@ sesion_*.txt
 
 # Lock files
 **/package-lock.json
+
+# PII sin protección: padrones de afiliados CTERA (~445k DNI+nombre completo)
+# ver ctera/consolidado/reporte_consolidacion.json y memoria del proyecto
+ctera/
