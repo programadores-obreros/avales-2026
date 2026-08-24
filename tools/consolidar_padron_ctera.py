@@ -110,6 +110,13 @@ TOTAL_RE_ALT = re.compile(r"(\d+)\s*electores\b", re.IGNORECASE)
 # reales; auditoría 2026-08-22)
 MESA_RE = re.compile(r"MESA\s*[:\-–—]?\s*N?[°ºo]?\.?\s*(\d+[A-Za-z]?)", re.IGNORECASE)
 MESA_FILENAME_RE = re.compile(r"Mesa[_\s]*0*(\d+)", re.IGNORECASE)
+# UTE (CABA): cada PDF trae un encabezado de página con el texto COMPLETO
+# de escuela+dirección ("UTE | Esc. Prim. N°1 Tomasa de la Quintana de
+# Escalada - Av Corrientes 5332 | Total de electores: 101 | ..."); la
+# columna "Escuela" de la tabla, en cambio, viene cortada por el ancho de
+# columna (ej. "Esc. Prim. N°1 Tomasa de la Quintana de", sin el resto del
+# nombre ni la dirección) — auditoría 2026-08-24, 9/136 mesas afectadas.
+UTE_HEADER_RE = re.compile(r"^UTE \| (.+?) \| Total de electores", re.MULTILINE)
 JUB_RE = re.compile(r"\bJUB\b|JUBILAD", re.IGNORECASE)
 
 
@@ -206,6 +213,11 @@ def parse_generic_pdf(text: str, sindicato: str, archivo: str, formato: str) -> 
     nombre_antes = sindicato in NOMBRE_ANTES_DE_DNI
     records: list[Record] = []
 
+    # Ver comentario de UTE_HEADER_RE arriba: un PDF por mesa, mismo texto
+    # completo para todas las filas de ese archivo.
+    ute_header_m = UTE_HEADER_RE.search(text) if sindicato == "UTE" else None
+    mesa_sede_pdf = ute_header_m.group(1).strip() if ute_header_m else ""
+
     total_m = TOTAL_RE.search(text) or TOTAL_RE_ALT.search(text)
     total_declarado = int(total_m.group(1)) if total_m else None
 
@@ -266,6 +278,7 @@ def parse_generic_pdf(text: str, sindicato: str, archivo: str, formato: str) -> 
                 detalle=detalle,
                 formato_origen=formato,
                 archivo_origen=archivo,
+                mesa_sede_pdf=mesa_sede_pdf,
             )
         )
     return records, total_declarado
