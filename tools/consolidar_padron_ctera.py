@@ -124,6 +124,14 @@ class Record:
     detalle: str
     formato_origen: str
     archivo_origen: str
+    # Texto real de ubicación de la mesa, tal como lo declara el PDF oficial
+    # en su propio encabezado "MESA N: <ubicación>" (parse_suteba_pdf ya
+    # capturaba este grupo del regex, solo no se estaba guardando en ningún
+    # lado — auditoría 2026-08-24, ver memoria/commit). Es la fuente MÁS
+    # confiable de dónde funciona cada mesa: no depende de cruzar contra
+    # catálogos externos ni de coincidencias de numeración con otras
+    # elecciones. Vacío para sindicatos que no pasan por parse_suteba_pdf.
+    mesa_sede_pdf: str = ""
 
 
 def pdf_to_text(path: Path) -> str:
@@ -292,17 +300,18 @@ def parse_suteba_pdf(text: str, archivo: str) -> tuple[list[Record], list[dict]]
     # solo bloque lógico (si no, el total declarado — que aparece una sola
     # vez, al final de la mesa completa — se compara contra un fragmento de
     # una sola página y da falsos "faltan cientos de personas").
-    bloques: list[tuple[str, int, int]] = []  # (mesa_num, start, end)
+    bloques: list[tuple[str, int, int, str]] = []  # (mesa_num, start, end, ubicacion)
     for i, sec in enumerate(sections):
         mesa_num = sec.group(1)
+        ubicacion = sec.group(2).strip()
         start = sec.end()
         end = sections[i + 1].start() if i + 1 < len(sections) else len(text)
         if bloques and bloques[-1][0] == mesa_num:
-            bloques[-1] = (mesa_num, bloques[-1][1], end)
+            bloques[-1] = (mesa_num, bloques[-1][1], end, bloques[-1][3])
         else:
-            bloques.append((mesa_num, start, end))
+            bloques.append((mesa_num, start, end, ubicacion))
 
-    for mesa_num, start, end in bloques:
+    for mesa_num, start, end, ubicacion in bloques:
         block = text[start:end]
         n_antes = len(records)
         for raw_line in block.splitlines():
@@ -328,6 +337,7 @@ def parse_suteba_pdf(text: str, archivo: str) -> tuple[list[Record], list[dict]]
                     detalle=detalle,
                     formato_origen="iText",
                     archivo_origen=archivo,
+                    mesa_sede_pdf=ubicacion,
                 )
             )
         total_m = TOTAL_MESA_SUTEBA_RE.search(block)
