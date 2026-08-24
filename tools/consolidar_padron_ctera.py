@@ -117,6 +117,13 @@ MESA_FILENAME_RE = re.compile(r"Mesa[_\s]*0*(\d+)", re.IGNORECASE)
 # columna (ej. "Esc. Prim. N°1 Tomasa de la Quintana de", sin el resto del
 # nombre ni la dirección) — auditoría 2026-08-24, 9/136 mesas afectadas.
 UTE_HEADER_RE = re.compile(r"^UTE \| (.+?) \| Total de electores", re.MULTILINE)
+# ADOSAC (Santa Cruz): mismo principio (el PDF trae sede+dirección
+# completas en el encabezado, no en la fila de cada persona — acá
+# literalmente NO hay dato de escuela por fila, el único lugar donde
+# existe es el encabezado), pero las 16 mesas vienen juntas en un solo
+# PDF ("MESA 1A - FILIAL RIO GALLEGOS (DIR.: Pasteur 813)"), no un PDF
+# por mesa como UTE — hay que trackearlo por fila, igual que MESA_RE.
+ADOSAC_HEADER_RE = re.compile(r"MESA\s+\d+[AB]?\s*-\s*(.+?)\s*\(DIR\.:\s*(.+?)\s*\)", re.IGNORECASE)
 JUB_RE = re.compile(r"\bJUB\b|JUBILAD", re.IGNORECASE)
 
 
@@ -216,7 +223,20 @@ def parse_generic_pdf(text: str, sindicato: str, archivo: str, formato: str) -> 
     # Ver comentario de UTE_HEADER_RE arriba: un PDF por mesa, mismo texto
     # completo para todas las filas de ese archivo.
     ute_header_m = UTE_HEADER_RE.search(text) if sindicato == "UTE" else None
-    mesa_sede_pdf = ute_header_m.group(1).strip() if ute_header_m else ""
+    mesa_sede_fijo = ute_header_m.group(1).strip() if ute_header_m else ""
+
+    # ADOSAC: ver comentario de ADOSAC_HEADER_RE arriba — un solo PDF con
+    # las 16 mesas, se trackea por fila igual que mesa_actual más abajo.
+    sede_marcadores = (
+        [
+            (m.start(), f"{m.group(1).strip()} - {m.group(2).strip()}")
+            for m in ADOSAC_HEADER_RE.finditer(text)
+        ]
+        if sindicato == "ADOSAC"
+        else []
+    )
+    sede_actual = sede_marcadores[0][1] if sede_marcadores else ""
+    sede_marcador_idx = 0
 
     total_m = TOTAL_RE.search(text) or TOTAL_RE_ALT.search(text)
     total_declarado = int(total_m.group(1)) if total_m else None
@@ -248,6 +268,10 @@ def parse_generic_pdf(text: str, sindicato: str, archivo: str, formato: str) -> 
             mesa_actual = marcadores[marcador_idx][1]
             marcador_idx += 1
 
+        while sede_marcador_idx < len(sede_marcadores) and sede_marcadores[sede_marcador_idx][0] <= line_offset:
+            sede_actual = sede_marcadores[sede_marcador_idx][1]
+            sede_marcador_idx += 1
+
         parsed = parse_generic_row(line, nombre_antes=nombre_antes)
         if parsed is None:
             continue
@@ -278,7 +302,7 @@ def parse_generic_pdf(text: str, sindicato: str, archivo: str, formato: str) -> 
                 detalle=detalle,
                 formato_origen=formato,
                 archivo_origen=archivo,
-                mesa_sede_pdf=mesa_sede_pdf,
+                mesa_sede_pdf=sede_actual if sindicato == "ADOSAC" else mesa_sede_fijo,
             )
         )
     return records, total_declarado
