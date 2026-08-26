@@ -117,6 +117,16 @@ MESA_FILENAME_RE = re.compile(r"Mesa[_\s]*0*(\d+)", re.IGNORECASE)
 # columna (ej. "Esc. Prim. N°1 Tomasa de la Quintana de", sin el resto del
 # nombre ni la dirección) — auditoría 2026-08-24, 9/136 mesas afectadas.
 UTE_HEADER_RE = re.compile(r"^UTE \| (.+?) \| Total de electores", re.MULTILINE)
+# UEPC (Córdoba): mismo principio que UTE — un PDF por mesa, encabezado con
+# "UEPC - Córdoba | DEPARTAMENTO | Sede/Escuela, Calle Número, Localidad."
+# (ej. "UEPC - Córdoba | CALAMUCHITA | Esc. Domingo Sarmiento, Calle Pública
+# S/N, La Cruz"). Verificado 186/186 PDFs reales antes de agregar esto
+# (auditoría 2026-08-25). El grupo 2 viene separado por comas, no por " - "
+# como UTE/ADOSAC — se convierte la primera coma a " - " al usarlo, para
+# que recuperarDireccionMesaSede()/resolverMesaDesdeSedePdf() en
+# ctera-2026/scripts/import-firestore.mjs (que buscan " - ") lo sigan
+# separando igual en sede/dirección.
+UEPC_HEADER_RE = re.compile(r"^UEPC - Córdoba \| [^|]+? \| (.+?)\.?\s*$", re.MULTILINE)
 # ADOSAC (Santa Cruz): mismo principio (el PDF trae sede+dirección
 # completas en el encabezado, no en la fila de cada persona — acá
 # literalmente NO hay dato de escuela por fila, el único lugar donde
@@ -223,7 +233,18 @@ def parse_generic_pdf(text: str, sindicato: str, archivo: str, formato: str) -> 
     # Ver comentario de UTE_HEADER_RE arriba: un PDF por mesa, mismo texto
     # completo para todas las filas de ese archivo.
     ute_header_m = UTE_HEADER_RE.search(text) if sindicato == "UTE" else None
-    mesa_sede_fijo = ute_header_m.group(1).strip() if ute_header_m else ""
+    uepc_header_m = UEPC_HEADER_RE.search(text) if sindicato == "UEPC" else None
+    if uepc_header_m:
+        contenido = uepc_header_m.group(1).strip()
+        if "," in contenido:
+            sede, resto = contenido.split(",", 1)
+            mesa_sede_fijo = f"{sede.strip()} - {resto.strip()}"
+        else:
+            mesa_sede_fijo = contenido
+    elif ute_header_m:
+        mesa_sede_fijo = ute_header_m.group(1).strip()
+    else:
+        mesa_sede_fijo = ""
 
     # ADOSAC: ver comentario de ADOSAC_HEADER_RE arriba — un solo PDF con
     # las 16 mesas, se trackea por fila igual que mesa_actual más abajo.
