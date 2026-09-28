@@ -1,0 +1,41 @@
+---
+// por-que-la-cta.astro — Political page built on the two ballot slogans.
+// No padrón percentages/statistics (user decision). Body text is [PENDIENTE]
+// where there is no official source text yet.
+import Layout from '../layouts/Layout.astro';
+import Pendiente from '../components/Pendiente.astro';
+import { SLOGAN_1, SLOGAN_2 } from '../data/site';
+---
+
+<Layout
+  title="Por qué la CTA — Lista 6 Multicolor, La Matanza"
+  description="Por qué la Lista 6 Multicolor se presenta en la CTA La Matanza: una central independiente frente al ajuste."
+>
+  <section class="bg-light pt-24 pb-16 md:pt-28 md:pb-24">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <p class="text-center font-display text-xs font-bold uppercase tracking-[0.3em] text-primary/70">
+        Nuestra posición
+      </p>
+      <h1 class="mt-2 text-center font-display text-2xl font-black uppercase tracking-tight text-dark sm:text-4xl">
+        Por qué nos presentamos en la <span class="text-gradient-multi">CTA</span>
+      </h1>
+      <div class="mx-auto mt-4 h-1 w-20 rounded-full gradient-multi"></div>
+
+      <blockquote class="mt-10 rounded-2xl border-l-4 border-primary bg-white p-6 shadow-sm">
+        <p class="font-display text-xl font-bold leading-snug text-dark sm:text-2xl">
+          &ldquo;{SLOGAN_1}&rdquo;
+        </p>
+      </blockquote>
+
+      <blockquote class="mt-4 rounded-2xl border-l-4 border-secondary bg-white p-6 shadow-sm">
+        <p class="font-display text-lg font-semibold leading-snug text-dark sm:text-xl">
+          &ldquo;{SLOGAN_2}&rdquo;
+        </p>
+      </blockquote>
+
+      <div class="mt-10 flex flex-col gap-6 font-body text-base leading-relaxed text-dark/80">
+        <Pendiente descripcion="el desarrollo político completo de por qué la lista se presenta en la CTA La Matanza (contexto, antecedentes y objetivos, a partir de los dos lemas de la boleta oficial)" />
+      </div>
+    </div>
+  </section>
+</Layout>

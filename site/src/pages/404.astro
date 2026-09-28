@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Página no encontrada — Lista 6 Multicolor" description="La página que buscás no existe.">
+  <section class="flex min-h-[70svh] flex-col items-center justify-center bg-light px-4 pt-24 pb-16 text-center">
+    <p class="text-rainbow font-display text-6xl font-black sm:text-8xl">404</p>
+    <h1 class="mt-4 font-display text-xl font-black uppercase tracking-tight text-dark sm:text-2xl">
+      Esta página no existe
+    </h1>
+    <p class="mt-3 max-w-sm font-body text-sm text-dark/60 sm:text-base">
+      Puede que el enlace esté roto o que la página se haya movido.
+    </p>
+    <a
+      href="/"
+      class="mt-8 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-display text-sm font-bold text-white shadow-md transition hover:opacity-90"
+    >
+      Volver al inicio
+    </a>
+  </section>
+</Layout>

@@ -1,0 +1,74 @@
+---
+// sumate.astro — Join/contact call to action. Social links [PENDIENTE].
+import Layout from '../layouts/Layout.astro';
+import Pendiente from '../components/Pendiente.astro';
+import { REDES, CONTACTO_EMAIL } from '../data/site';
+
+const redesConfiguradas = Object.entries(REDES).filter(([, url]) => url !== null) as [string, string][];
+---
+
+<Layout
+  title="Sumate — Lista 6 Multicolor, CTA La Matanza"
+  description="Sumate a la Lista 6 Multicolor en la CTA La Matanza. Contacto y redes."
+>
+  <section class="bg-light pt-24 pb-16 md:pt-28 md:pb-24">
+    <div class="mx-auto max-w-2xl px-4 text-center sm:px-6 lg:px-8">
+      <p class="font-display text-xs font-bold uppercase tracking-[0.3em] text-primary/70">Lista 6 Multicolor</p>
+      <h1 class="mt-2 font-display text-2xl font-black uppercase tracking-tight text-dark sm:text-4xl">
+        <span class="text-gradient-multi">Sumate</span> a la lista
+      </h1>
+      <div class="mx-auto mt-4 h-1 w-20 rounded-full gradient-multi"></div>
+
+      <p class="mt-8 font-body text-base leading-relaxed text-dark/80 sm:text-lg">
+        Si querés participar, aportar tu trabajo o simplemente conocer más sobre la lista, este es el
+        lugar para acercarte.
+      </p>
+
+      <!-- Contact -->
+      <div class="mt-10 rounded-2xl bg-white p-6 shadow-sm sm:p-8">
+        <h2 class="font-display text-sm font-bold uppercase tracking-widest text-dark/60">Contacto</h2>
+        <div class="mt-4">
+          {
+            CONTACTO_EMAIL ? (
+              <a
+                href={`mailto:${CONTACTO_EMAIL}`}
+                class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-display text-sm font-bold text-white shadow-md transition hover:opacity-90"
+              >
+                {CONTACTO_EMAIL}
+              </a>
+            ) : (
+              <Pendiente descripcion="un email o canal de contacto directo para sumarse" />
+            )
+          }
+        </div>
+      </div>
+
+      <!-- Redes -->
+      <div class="mt-6 rounded-2xl bg-white p-6 shadow-sm sm:p-8">
+        <h2 class="font-display text-sm font-bold uppercase tracking-widest text-dark/60">Redes sociales</h2>
+        <div class="mt-4">
+          {
+            redesConfiguradas.length > 0 ? (
+              <ul class="flex flex-wrap justify-center gap-3" role="list">
+                {redesConfiguradas.map(([nombre, url]) => (
+                  <li>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex min-h-[44px] items-center justify-center rounded-full border border-dark/15 px-5 py-2.5 font-body text-sm font-semibold capitalize text-dark hover:border-primary hover:text-primary transition-colors"
+                    >
+                      {nombre}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Pendiente descripcion="los enlaces a redes sociales oficiales de la lista" />
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,98 @@
+---
+// BottomNav.astro — Fixed bottom navigation bar for mobile (hidden on md+).
+// Lista 6 Multicolor — CTA La Matanza. Mobile-first: this is the primary nav on phones.
+
+const pathname = Astro.url.pathname;
+
+function isActive(href: string): boolean {
+  if (href === '/') return pathname === '/' || pathname === '';
+  return pathname.startsWith(href);
+}
+
+const navItems = [
+  {
+    href: '/',
+    label: 'Inicio',
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+      <polyline points="9 21 9 12 15 12 15 21"/>
+    </svg>`,
+  },
+  {
+    href: '/lista',
+    label: 'La Lista',
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>
+      <circle cx="19" cy="8" r="3"/>
+      <path d="M22 21v-1.5a3.5 3.5 0 0 0-2.5-3.35"/>
+    </svg>`,
+  },
+  {
+    href: '/por-que-la-cta',
+    label: 'Por qué',
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>`,
+  },
+  {
+    href: '/como-votar',
+    label: 'Cómo votar',
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <path d="M9 12l2 2 4-4"/>
+    </svg>`,
+  },
+  {
+    href: '/sumate',
+    label: 'Sumate',
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>`,
+  },
+] as const;
+---
+
+<nav
+  id="bottom-nav"
+  aria-label="Navegación principal (móvil)"
+  class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-dark/10 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]"
+  style="padding-bottom: env(safe-area-inset-bottom, 0px);"
+>
+  <ul class="flex items-stretch h-16" role="list">
+    {navItems.map(({ href, label, icon }) => {
+      const active = isActive(href);
+      return (
+        <li class="flex-1">
+          <a
+            href={href}
+            aria-label={label}
+            aria-current={active ? 'page' : undefined}
+            class:list={[
+              'relative flex flex-col items-center justify-center gap-1 w-full h-full transition-colors duration-200',
+              active ? 'text-primary' : 'text-dark/40 hover:text-dark/70',
+            ]}
+          >
+            {active && (
+              <span
+                class="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary"
+                aria-hidden="true"
+              />
+            )}
+            <span class="relative" set:html={icon} />
+            <span
+              class:list={[
+                'text-[10px] font-medium tracking-tight leading-none',
+                active ? 'font-semibold' : '',
+              ]}
+            >
+              {label}
+            </span>
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+</nav>

@@ -1,0 +1,168 @@
+---
+// Nav.astro — Sticky top navigation for Lista 6 Multicolor, CTA La Matanza.
+import { LISTA_NUMERO } from '../data/site';
+
+const navLinks = [
+  { href: '/', label: 'Inicio' },
+  { href: '/lista', label: 'La Lista' },
+  { href: '/por-que-la-cta', label: 'Por qué la CTA' },
+  { href: '/como-votar', label: 'Cómo votar' },
+  { href: '/sumate', label: 'Sumate' },
+];
+---
+
+<header
+  id="nav-header"
+  class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white/90 backdrop-blur-sm"
+>
+  <div class="h-1 w-full gradient-multi-horizontal"></div>
+
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+    <div class="flex items-center justify-between h-14">
+      <a href="/" class="flex flex-col leading-none group shrink-0" aria-label="Lista 6 Multicolor — inicio">
+        <span class="text-rainbow font-display font-black text-lg tracking-tight group-hover:opacity-90 transition-opacity">
+          LISTA {LISTA_NUMERO} MULTICOLOR
+        </span>
+        <span class="font-body text-[10px] font-medium text-dark/50 tracking-widest uppercase -mt-0.5">
+          CTA La Matanza
+        </span>
+      </a>
+
+      <ul class="hidden md:flex items-center gap-0.5" role="list">
+        {navLinks.map(({ href, label }) => (
+          <li>
+            <a
+              href={href}
+              class="nav-link relative px-2.5 py-2 rounded-md font-body font-medium text-xs text-dark/70 hover:text-dark transition-colors duration-200 group whitespace-nowrap"
+            >
+              {label}
+              <span class="absolute bottom-0 left-2.5 right-2.5 h-0.5 gradient-multi-horizontal rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left"></span>
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <div class="hidden md:flex items-center gap-3 shrink-0">
+        <a
+          href="/sumate"
+          class="nav-link font-body font-semibold text-xs px-3.5 py-2 rounded-full text-white gradient-primary hover:opacity-90 transition-opacity duration-200 shadow-sm whitespace-nowrap"
+        >
+          ¡Sumate!
+        </a>
+      </div>
+
+      <div class="flex md:hidden items-center gap-3">
+        <button
+          id="menu-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="mobile-menu"
+          aria-label="Abrir menú"
+          class="relative w-11 h-11 flex items-center justify-center rounded-lg text-dark/70 hover:text-dark hover:bg-dark/5 transition-all duration-200"
+        >
+          <span id="icon-open" aria-hidden="true" class="absolute">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </span>
+          <span id="icon-close" aria-hidden="true" class="absolute hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </span>
+        </button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<!-- Mobile full-screen overlay menu -->
+<div
+  id="mobile-menu"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Menú de navegación"
+  class="fixed inset-0 z-40 bg-white flex flex-col pt-16 pb-8
+         opacity-0 pointer-events-none transition-opacity duration-300 md:hidden overflow-y-auto"
+>
+  <div class="absolute top-0 right-0 w-64 h-64 gradient-multi opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" aria-hidden="true"></div>
+  <div class="absolute bottom-0 left-0 w-48 h-48 gradient-primary opacity-10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" aria-hidden="true"></div>
+  <div class="absolute top-0 left-0 right-0 h-1 gradient-multi-horizontal" aria-hidden="true"></div>
+
+  <div class="px-8 pt-4">
+    <ul class="flex flex-col gap-1 w-full" role="list">
+      {navLinks.map(({ href, label }) => (
+        <li class="w-full">
+          <a
+            href={href}
+            class="mobile-nav-link flex items-center py-3 px-4 rounded-xl font-display font-bold text-2xl text-dark hover:text-primary hover:bg-primary/5 transition-all duration-200"
+          >
+            {label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</div>
+
+<script>
+  const header = document.getElementById('nav-header')!;
+  const toggle = document.getElementById('menu-toggle')!;
+  const mobileMenu = document.getElementById('mobile-menu')!;
+  const iconOpen = document.getElementById('icon-open')!;
+  const iconClose = document.getElementById('icon-close')!;
+  const mobileLinks = document.querySelectorAll<HTMLElement>('.mobile-nav-link');
+
+  let menuOpen = false;
+
+  function updateHeaderOnScroll(): void {
+    if (window.scrollY > 20) {
+      header.classList.add('shadow-md', 'bg-white/98');
+      header.classList.remove('bg-white/90');
+    } else {
+      header.classList.remove('shadow-md', 'bg-white/98');
+      header.classList.add('bg-white/90');
+    }
+  }
+
+  window.addEventListener('scroll', updateHeaderOnScroll, { passive: true });
+  updateHeaderOnScroll();
+
+  function openMenu(): void {
+    menuOpen = true;
+    mobileMenu.classList.remove('opacity-0', 'pointer-events-none');
+    mobileMenu.classList.add('opacity-100');
+    iconOpen.classList.add('hidden');
+    iconClose.classList.remove('hidden');
+    toggle.setAttribute('aria-expanded', 'true');
+    toggle.setAttribute('aria-label', 'Cerrar menú');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMenu(): void {
+    menuOpen = false;
+    mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+    mobileMenu.classList.remove('opacity-100');
+    iconOpen.classList.remove('hidden');
+    iconClose.classList.add('hidden');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', 'Abrir menú');
+    document.body.style.overflow = '';
+  }
+
+  toggle.addEventListener('click', () => {
+    if (menuOpen) closeMenu();
+    else openMenu();
+  });
+
+  mobileLinks.forEach((link) => {
+    link.addEventListener('click', closeMenu);
+  });
+
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && menuOpen) closeMenu();
+  });
+</script>

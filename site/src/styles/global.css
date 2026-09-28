@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand Colors — Lista 6 Multicolor, CTA La Matanza */
+  --color-primary: #C41E2A;
+  --color-secondary: #2E7D32;
+  --color-accent: #E91E8E;
+  --color-dark: #1A1A1A;
+  --color-light: #FAFAFA;
+
+  /* Extended brand palette */
+  --color-primary-light: #E53935;
+  --color-primary-dark: #A31722;
+  --color-secondary-light: #43A047;
+  --color-secondary-dark: #1B5E20;
+  --color-accent-light: #F06292;
+  --color-accent-dark: #8E244D;
+
+  /* Accent colors */
+  --color-golden: #F5A623;
+  --color-orange: #F57C00;
+  --color-sky: #4FC3F7;
+  --color-purple: #7B1FA2;
+
+  /* Font families */
+  --font-display: 'Montserrat', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+/* Base styles */
+@layer base {
+  html {
+    font-family: var(--font-body);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background-color: var(--color-light);
+    color: var(--color-dark);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+
+  /* Visible focus styles everywhere (keyboard-usable nav, filters, cards) */
+  :focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+/* Skip link: hidden until focused, jumps to #main */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: white;
+  color: var(--color-dark);
+  padding: 0.75rem 1.25rem;
+  border-radius: 0 0 0.5rem 0;
+  font-weight: 700;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+/* Multicolor gradient utilities */
+@utility gradient-multi {
+  background: linear-gradient(135deg, #C41E2A 0%, #E91E8E 25%, #F5A623 50%, #2E7D32 75%, #4FC3F7 100%);
+}
+
+@utility gradient-multi-horizontal {
+  background: linear-gradient(90deg, #C41E2A 0%, #E91E8E 25%, #F5A623 50%, #2E7D32 75%, #4FC3F7 100%);
+}
+
+@utility gradient-primary {
+  background: linear-gradient(135deg, #C41E2A 0%, #E91E8E 100%);
+}
+
+@utility text-gradient-multi {
+  background: linear-gradient(90deg, #C41E2A 0%, #E91E8E 20%, #F5A623 40%, #2E7D32 60%, #4FC3F7 80%, #7B1FA2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@utility text-rainbow {
+  background: linear-gradient(90deg, #C41E2A, #F57C00, #F5A623, #2E7D32, #4FC3F7, #7B1FA2, #E91E8E);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Fade-in animation for scroll reveals */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up {
+    animation: none;
+  }
+}
+
+/* Pulse for countdown / live indicators */
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@utility animate-pulse-soft {
+  animation: pulse-soft 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-soft {
+    animation: none;
+  }
+}
+
+/* MULTICOLOR wordmark: rainbow-colored letter by letter, like the ballot print */
+.wordmark-multicolor span {
+  display: inline-block;
+}
+.wordmark-multicolor span:nth-child(10n+1) { color: #C41E2A; }
+.wordmark-multicolor span:nth-child(10n+2) { color: #E65100; }
+.wordmark-multicolor span:nth-child(10n+3) { color: #C77700; }
+.wordmark-multicolor span:nth-child(10n+4) { color: #2E7D32; }
+.wordmark-multicolor span:nth-child(10n+5) { color: #0288D1; }
+.wordmark-multicolor span:nth-child(10n+6) { color: #7B1FA2; }
+.wordmark-multicolor span:nth-child(10n+7) { color: #E91E8E; }
+.wordmark-multicolor span:nth-child(10n+8) { color: #C41E2A; }
+.wordmark-multicolor span:nth-child(10n+9) { color: #E65100; }
+.wordmark-multicolor span:nth-child(10n+10) { color: #2E7D32; }

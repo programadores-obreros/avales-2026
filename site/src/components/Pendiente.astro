@@ -1,0 +1,40 @@
+---
+// Pendiente.astro — Visible marker for content that has no real source text yet.
+// Never invents copy: renders a styled, clearly-labeled placeholder instead.
+interface Props {
+  /** What real content should go here, e.g. "propuestas de la lista". */
+  descripcion: string;
+  /** Use 'block' for a paragraph-sized placeholder, 'inline' for a short phrase. */
+  variant?: 'block' | 'inline';
+}
+
+const { descripcion, variant = 'block' } = Astro.props;
+---
+
+{
+  variant === 'inline' ? (
+    <span class="inline-flex items-center gap-1.5 rounded-full border border-dashed border-golden/60 bg-golden/10 px-3 py-1 font-body text-xs font-semibold text-orange">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 9v4" />
+        <path d="M12 17h.01" />
+        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+      </svg>
+      [PENDIENTE: {descripcion}]
+    </span>
+  ) : (
+    <div class="rounded-2xl border-2 border-dashed border-golden/60 bg-golden/10 px-5 py-4 font-body text-sm text-dark/70">
+      <p class="flex items-center gap-2 font-display text-xs font-bold uppercase tracking-widest text-orange">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 9v4" />
+          <path d="M12 17h.01" />
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+        </svg>
+        Pendiente
+      </p>
+      <p class="mt-1.5">
+        Todavía no hay texto oficial para <strong>{descripcion}</strong>. Se completa cuando la
+        lista lo confirme.
+      </p>
+    </div>
+  )
+}

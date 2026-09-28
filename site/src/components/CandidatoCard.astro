@@ -1,0 +1,89 @@
+---
+// CandidatoCard.astro — Photo or multicolor initials placeholder + name + cargo + bloque badge.
+import type { Candidatura, Bloque } from '../data/lista';
+
+interface Props {
+  candidatura: Candidatura;
+  bloqueLabel: string;
+  /** 'eager' only for above-the-fold cards (e.g. home secretariado highlight). */
+  loading?: 'eager' | 'lazy';
+}
+
+const { candidatura, bloqueLabel, loading = 'lazy' } = Astro.props;
+const { nombre, cargo, foto } = candidatura;
+
+const iniciales = nombre
+  .split(/\s+/)
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((p) => p[0])
+  .join('')
+  .toUpperCase();
+
+const bloqueTone: Record<Bloque, string> = {
+  secretariado: 'primary',
+  vocales: 'accent',
+  revisora: 'secondary',
+  'congresales-titulares': 'golden',
+  'congresales-suplentes': 'sky',
+};
+const tone = bloqueTone[candidatura.bloque];
+
+// Tailwind's scanner needs full static class strings (no `${tone}` interpolation),
+// so every bloque gets its own literal gradient class here instead of one built at runtime.
+const bloqueGradient: Record<Bloque, string> = {
+  secretariado: 'from-primary/40 via-accent/25 to-secondary/25',
+  vocales: 'from-accent/40 via-accent/25 to-secondary/25',
+  revisora: 'from-secondary/40 via-accent/25 to-secondary/25',
+  'congresales-titulares': 'from-golden/40 via-accent/25 to-secondary/25',
+  'congresales-suplentes': 'from-sky/40 via-accent/25 to-secondary/25',
+};
+---
+
+<article
+  class="cand-card group relative flex flex-col overflow-hidden rounded-2xl border border-dark/10 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+  data-cand-nombre={nombre}
+  data-cand-bloque={candidatura.bloque}
+>
+  <div class="relative aspect-square w-full overflow-hidden bg-light">
+    {
+      foto ? (
+        <img
+          src={foto}
+          alt={nombre}
+          width="320"
+          height="320"
+          loading={loading}
+          decoding="async"
+          class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+        />
+      ) : (
+        <div
+          class:list={['flex h-full w-full items-center justify-center bg-gradient-to-br', bloqueGradient[candidatura.bloque]]}
+          aria-hidden="true"
+        >
+          <span class="font-display text-3xl font-black text-white/90 drop-shadow-md sm:text-4xl">
+            {iniciales}
+          </span>
+        </div>
+      )
+    }
+    <span
+      class:list={[
+        'absolute top-2 left-2 rounded-full px-2 py-0.5 font-display text-[9px] font-bold uppercase tracking-wide text-white shadow-sm',
+        tone === 'primary' && 'bg-primary',
+        tone === 'accent' && 'bg-accent',
+        tone === 'secondary' && 'bg-secondary',
+        tone === 'golden' && 'bg-golden text-dark',
+        tone === 'sky' && 'bg-sky text-dark',
+      ]}
+    >
+      {bloqueLabel}
+    </span>
+  </div>
+  <div class="gradient-multi-horizontal h-1"></div>
+  <div class="flex flex-1 flex-col gap-0.5 p-3">
+    <p class="font-display text-sm font-bold leading-tight text-dark">{nombre}</p>
+    {cargo && <p class="font-body text-xs font-medium text-primary">{cargo}</p>}
+  </div>
+</article>
