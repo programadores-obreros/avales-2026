@@ -58,7 +58,8 @@ SUTEBA-teacher-specific section (ESI, estatuto docente, actos, concursos).
 - [ ] **Election date** — site uses **3 Nov 2026** (`ELECTION_DATE`, `ELECTION_DATE_CONFIRMED=false`,
   shown as "Fecha estimada — a confirmar"). User must confirm for La Matanza.
 - [ ] Secretariat photo missing: **Nancy Decoud** (10/11 have photo). 45 photos total.
-- [ ] Is "Sofía Antonella Vega" (vocales-8) the same person as "Sofía Vega" in web_multi?
+- [ ] Is "Sofía Antonella Vega" (vocales-8) the same person as the web_multi #79 flyer
+  ("SOFÍA VEGA — CONGRESAL", currently used for congresales-titulares-23 "Sofía Vega")?
 - [ ] Review all 45 photos together with the user (`odd/data/foto_matches_v2.json`).
 - [ ] Propuestas, "Por qué la CTA" body, requisitos para votar, redes, contacto → `[PENDIENTE]`.
 - [x] Firebase project `cta-multicolor-2026` created by the user; hosting live.

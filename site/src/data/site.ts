@@ -2,14 +2,13 @@
 
 /**
  * Election date/time, ISO 8601 with explicit Argentina offset (-03:00).
- * NOT CONFIRMED for CTA La Matanza — see ELECTION_DATE_CONFIRMED below.
- * Source: only 2026-dated reference found is CTA San Juan (3/11/2026); national
- * CTA elections are usually same-day; current mandate ends 30/11/2026.
+ * Day confirmed by the list (2026-09-27). The 08:00 opening time is still an assumption
+ * used only by the countdown.
  */
 export const ELECTION_DATE = '2026-11-03T08:00:00-03:00';
 
 /** When false, any UI showing ELECTION_DATE must also show "fecha estimada — a confirmar". */
-export const ELECTION_DATE_CONFIRMED = false;
+export const ELECTION_DATE_CONFIRMED = true;
 
 export const LISTA_NUMERO = 6;
 export const LISTA_NOMBRE = 'Lista 6 Multicolor';
