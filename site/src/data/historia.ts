@@ -10,6 +10,8 @@ export interface Hito {
   titulo: string;
   texto: string;
   fuente: { nombre: string; url: string };
+  /** Optional enumerated points from the source (e.g. a declaration's items). */
+  puntos?: string[];
   /** 'analisis' marks interpretation (e.g. a researcher's reading), not a bare fact. */
   tipo?: 'hecho' | 'analisis';
 }
@@ -51,8 +53,17 @@ export const ERAS: Era[] = [
         fechaTexto: '17 de diciembre de 1991',
         titulo: 'El Grito de Burzaco',
         texto:
-          'Sindicatos encabezados por ATE y CTERA rompen con la CGT, que acompañaba las privatizaciones del gobierno de Carlos Menem, y lanzan la construcción de una nueva central.',
-        fuente: FUENTE_FUNDACION,
+          'Sindicatos encabezados por ATE y CTERA rompen con la CGT, que acompañaba las privatizaciones del gobierno de Carlos Menem. Su declaración denuncia un plan económico que solo prioriza el pago de la deuda externa y propone cuatro prácticas para un nuevo sindicalismo:',
+        puntos: [
+          'Autonomía del Estado, de las patronales y de los partidos políticos.',
+          'Democracia sindical: voto directo para elegir a lxs dirigentes.',
+          'Apertura a otras organizaciones sociales, en especial a lxs excluidxs por el modelo: cinco millones de personas con problemas de empleo.',
+          'Ética sindical: combatir la corrupción y rechazar el pragmatismo que convalida el ajuste.',
+        ],
+        fuente: {
+          nombre: 'CTA Provincia de Buenos Aires',
+          url: 'https://ctabsas.org.ar/noticias/article/a-25-anos-del-grito-de-burzaco',
+        },
       },
       {
         id: 'encuentro-rosario',
@@ -121,9 +132,28 @@ export const ERAS: Era[] = [
   {
     id: 'ruptura',
     titulo: 'La ruptura',
-    periodo: '2010–2014',
-    resumen: 'Una elección interna escandalosa parte a la central en dos.',
+    periodo: '2008–2014',
+    resumen: 'Un programa en disputa y una elección interna escandalosa parten a la central en dos.',
     hitos: [
+      {
+        id: 'constituyente-social',
+        fecha: '2008-10-24',
+        fechaTexto: '24 y 25 de octubre de 2008',
+        titulo: 'La Constituyente Social',
+        texto:
+          'En Jujuy, la CTA —todavía unificada— lanza la Constituyente Social. Sus conclusiones proponen, entre otros puntos:',
+        puntos: [
+          'Reforma agraria, con restitución de tierras a los pueblos originarios y protección ambiental.',
+          'No pago de la deuda externa.',
+          'Recuperación de los recursos naturales (petróleo, gas, minería, agua) y de los servicios públicos.',
+          'Distribución de la riqueza: ingreso universal, soberanía alimentaria, fin del trabajo precario e impuestos progresivos.',
+          'Democracia directa: plebiscitos, referéndums y presupuesto participativo.',
+        ],
+        fuente: {
+          nombre: 'CTA Autónoma Córdoba',
+          url: 'http://ctaacordoba.org/conclusiones-del-primer-encuentro-de-la-constituyente-social/',
+        },
+      },
       {
         id: 'elecciones-2010',
         fecha: '2010-09',
@@ -139,7 +169,7 @@ export const ERAS: Era[] = [
         fechaTexto: 'Análisis',
         titulo: 'Dos formas de entender la autonomía',
         texto:
-          'Según la investigadora María Belén Morris (revista Izquierdas, 2020), la ruptura enfrentó dos lecturas del principio de autonomía: una parte apostó a la acción sindical junto al gobierno de entonces; la otra, a la construcción independiente desde las bases.',
+          'Según la investigadora María Belén Morris (revista Izquierdas, 2020), la ruptura enfrentó dos proyectos y dos lecturas del principio de autonomía: una parte apostó a la acción sindical junto al gobierno de entonces; la otra, a la Constituyente Social y a la construcción independiente desde las bases.',
         fuente: { nombre: 'Morris, Izquierdas (2020)', url: 'https://www.redalyc.org/journal/3601/360174960016/html/' },
         tipo: 'analisis',
       },

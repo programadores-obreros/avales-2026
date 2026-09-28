@@ -184,6 +184,11 @@ function esFuturo(fecha: string): boolean {
                           </div>
                           <h3 class="mt-1.5 font-display text-base font-bold text-dark sm:text-lg">{hito.titulo}</h3>
                           <p class="mt-1.5 font-body text-sm leading-relaxed text-dark/80">{hito.texto}</p>
+                          {hito.puntos && (
+                            <ul class="mt-2 flex list-disc flex-col gap-1 pl-5 font-body text-sm leading-relaxed text-dark/80 marker:text-primary">
+                              {hito.puntos.map((punto) => <li>{punto}</li>)}
+                            </ul>
+                          )}
                           <a
                             href={hito.fuente.url}
                             target="_blank"
