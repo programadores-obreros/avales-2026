@@ -55,8 +55,8 @@ SUTEBA-teacher-specific section (ESI, estatuto docente, actos, concursos).
 
 ## Open decisions / pending inputs
 
-- [ ] **Election date** — site uses **3 Nov 2026** (`ELECTION_DATE`, `ELECTION_DATE_CONFIRMED=false`,
-  shown as "Fecha estimada — a confirmar"). User must confirm for La Matanza.
+- [x] **Election date** — **3 Nov 2026 confirmed by the user** (2026-09-27); `ELECTION_DATE_CONFIRMED=true`.
+  The 08:00 opening time used by the countdown is still an assumption.
 - [ ] Secretariat photo missing: **Nancy Decoud** (10/11 have photo). 45 photos total.
 - [ ] Is "Sofía Antonella Vega" (vocales-8) the same person as the web_multi #79 flyer
   ("SOFÍA VEGA — CONGRESAL", currently used for congresales-titulares-23 "Sofía Vega")?
@@ -104,5 +104,5 @@ check at 360px and desktop (claude-in-chrome, served over local HTTP).
 
 ## Next step
 
-User inputs: confirm date, Decoud photo, Sofía Vega identity, photo review, texts,
+User inputs: Decoud photo, Sofía Vega identity, photo review, texts,
 Cloudflare DNS → then connect `ctamulticolor.com.ar` in Firebase Hosting.
