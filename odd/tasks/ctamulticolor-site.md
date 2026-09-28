@@ -98,11 +98,17 @@ check at 360px and desktop (claude-in-chrome, served over local HTTP).
   subparts ≈ 0.54 s — cost of the 106-card HTML), Por qué / Cómo votar / Sumate
   100/100/100/100. Commit `ba86992f`.
 
+- [x] **T11 — Historia (timeline).** New page `/historia`: mobile-first vertical timeline of the
+  CTA's political history in 4 eras (nacimiento 1991–92, resistencia a los 90, ruptura 2010–14,
+  2026), every milestone with a source link; facts verified by fetching each source
+  (2026-09-28). Nav + BottomNav + link from "Por qué la CTA". Route: delegated writer
+  (4+ files). Checks: `astro check`, build, Lighthouse mobile, real-browser pass, deploy.
+
 ## Progress
 
 - 2026-09-27: T1–T10 done and deployed. `astro check` 0 errors, `pnpm install
   --frozen-lockfile` OK.
-- 2026-09-28: date confirmed, Sofía Vega photo on both cards, branch pushed, custom domain live.
+- 2026-09-28: T11 /historia live (17 milestones, 18 source links; Lighthouse mobile 100/100/100/100, LCP 1.2 s); one unverifiable phrase replaced. Date confirmed, Sofía Vega photo on both cards, branch pushed, custom domain live.
 
 ## Next step
 
