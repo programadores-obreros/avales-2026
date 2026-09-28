@@ -50,7 +50,7 @@ export const CANDIDATURAS: Candidatura[] = [
   { id: 'vocales-5', bloque: 'vocales', orden: 5, nombre: 'Manuel Roberto Andrés Machuca Gallegos', foto: '/images/candidatos/andres-machuca.webp' },
   { id: 'vocales-6', bloque: 'vocales', orden: 6, nombre: 'Melian Anabella', foto: '/images/candidatos/anabella-melian.webp' },
   { id: 'vocales-7', bloque: 'vocales', orden: 7, nombre: 'Luaces Mario', foto: '/images/candidatos/mario-luaces.webp' },
-  { id: 'vocales-8', bloque: 'vocales', orden: 8, nombre: 'Sofía Antonella Vega' },
+  { id: 'vocales-8', bloque: 'vocales', orden: 8, nombre: 'Sofía Antonella Vega', foto: '/images/candidatos/sofia-vega.webp' },
   { id: 'vocales-9', bloque: 'vocales', orden: 9, nombre: 'Gabriela Zaragoza', foto: '/images/candidatos/gabriela-zaragoza.webp' },
 
   // ── Comisión Revisora de Cuentas (6) ──

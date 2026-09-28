@@ -58,7 +58,7 @@ SUTEBA-teacher-specific section (ESI, estatuto docente, actos, concursos).
 - [x] **Election date** — **3 Nov 2026 confirmed by the user** (2026-09-27); `ELECTION_DATE_CONFIRMED=true`.
   The 08:00 opening time used by the countdown is still an assumption.
 - [ ] Secretariat photo missing: **Nancy Decoud** (10/11 have photo). 45 photos total.
-- [ ] Is "Sofía Antonella Vega" (vocales-8) the same person as the web_multi #79 flyer
+- [x] Confirmed by the user: "Sofía Antonella Vega" (vocales-8) IS the same person as the web_multi #79 flyer
   ("SOFÍA VEGA — CONGRESAL", currently used for congresales-titulares-23 "Sofía Vega")?
 - [ ] Review all 45 photos together with the user (`odd/data/foto_matches_v2.json`).
 - [ ] Propuestas, "Por qué la CTA" body, requisitos para votar, redes, contacto → `[PENDIENTE]`.
@@ -104,5 +104,5 @@ check at 360px and desktop (claude-in-chrome, served over local HTTP).
 
 ## Next step
 
-User inputs: Decoud photo, Sofía Vega identity, photo review, texts,
+User inputs: Decoud photo, photo review, texts,
 Cloudflare DNS → then connect `ctamulticolor.com.ar` in Firebase Hosting.
