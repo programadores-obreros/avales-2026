@@ -104,6 +104,13 @@ check at 360px and desktop (claude-in-chrome, served over local HTTP).
   (2026-09-28). Nav + BottomNav + link from "Por qué la CTA". Route: delegated writer
   (4+ files). Checks: `astro check`, build, Lighthouse mobile, real-browser pass, deploy.
 
+- [x] **T12 — Share modal + boleta + SEO.** Modal on EVERY page load (user decision
+  2026-09-28, accepted Google mobile-interstitial risk; opened after load to protect LCP) with
+  WhatsApp sharing of: boleta (image file via Web Share API, fallback link), site, date 3/11
+  (→ /como-votar), /lista, /sumate. New page `/boleta` (ballot image + download, own og:image).
+  SEO additions (WebSite JSON-LD, per-page checks). OG image redesign pending user choice.
+  Route: delegated writer. Checks: astro check, build, Lighthouse, real mobile share test by user.
+
 ## Progress
 
 - 2026-09-27: T1–T10 done and deployed. `astro check` 0 errors, `pnpm install

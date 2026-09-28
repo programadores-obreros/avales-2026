@@ -1,0 +1,281 @@
+---
+// ShareModal.astro — WhatsApp share dialog shown once per page load (user
+// decision 2026-09-28: no session/day throttling). Included once in Layout.astro
+// so it renders on every page. Uses the native <dialog> element for built-in
+// focus trapping and Escape-to-close; opens itself via JS after `load` + a
+// short delay so it never delays LCP and is absent from the initial paint.
+// Without JS the dialog simply never opens — all page content stays usable.
+import { LISTA_NUMERO } from '../data/site';
+import { waLink, SHARE_TEXTS, BOLETA_JPG_PATH, BOLETA_THUMB_WEBP_PATH, BOLETA_JPG_FILENAME } from '../data/share';
+
+const multicolorLetters = 'MULTICOLOR'.split('');
+
+const waSitio = waLink('sitio');
+const waFecha = waLink('fecha');
+const waLista = waLink('lista');
+const waSumate = waLink('sumate');
+const waBoletaFallback = waLink('boleta');
+
+// Text-only (no URL) used for the Web Share API file share; the fallback
+// wa.me link above already carries text + /boleta URL.
+const boletaShareText = SHARE_TEXTS.boleta;
+
+// Inline WhatsApp glyph (decorative only — real labels are the visible text
+// next to it), reused for all five share actions.
+const WA_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.2h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.22 8.22 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.55-3.7 8.23-8.24 8.23Zm4.52-6.17c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.78.97-.14.17-.29.19-.53.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.42.08-.17.04-.31-.02-.44-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.23.89 2.42 1.02 2.59.12.17 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.23-.16-.48-.28Z"/></svg>`;
+---
+
+<dialog
+  id="share-modal"
+  aria-labelledby="share-modal-title"
+  aria-describedby="share-modal-desc"
+  class="fixed inset-0 m-auto h-fit max-h-[90svh] w-[92vw] max-w-sm overflow-y-auto rounded-3xl border-0 bg-white p-0 text-dark shadow-2xl backdrop:bg-dark/70 backdrop:backdrop-blur-sm"
+>
+  <div class="animate-fade-in-up relative px-5 pt-5 pb-6 sm:px-6">
+    <button
+      type="button"
+      id="share-modal-close"
+      aria-label="Cerrar"
+      class="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full text-dark/70 transition-colors hover:bg-dark/5 hover:text-dark"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
+
+    <!-- Header -->
+    <div class="pr-8 text-center">
+      <p class="font-display text-sm font-black uppercase tracking-widest text-dark">LISTA {LISTA_NUMERO}</p>
+      <p class="wordmark-multicolor -mt-0.5 text-2xl font-display font-black leading-none sm:text-3xl">
+        {multicolorLetters.map((letter) => (
+          <span aria-hidden="true">{letter}</span>
+        ))}
+        <!-- Last child on purpose: letter colors are assigned with nth-child. -->
+        <span class="sr-only">MULTICOLOR</span>
+      </p>
+      <p class="mt-1.5 font-body text-xs text-dark/70">CTA La Matanza · 3 de noviembre</p>
+    </div>
+
+    <!-- Ballot thumbnail -->
+    <div class="mt-4 flex justify-center">
+      <img
+        src={BOLETA_THUMB_WEBP_PATH}
+        width="120"
+        height="160"
+        loading="lazy"
+        decoding="async"
+        fetchpriority="low"
+        alt=""
+        class="h-28 w-auto rounded-lg border border-dark/10 object-cover shadow-sm"
+      />
+    </div>
+
+    <h2 id="share-modal-title" class="mt-4 text-center font-display text-lg font-black uppercase tracking-tight text-dark">
+      Ayudanos a difundir
+    </h2>
+    <p id="share-modal-desc" class="sr-only">Elegí qué compartir por WhatsApp de la campaña de la Lista 6 Multicolor.</p>
+
+    <!-- Share actions -->
+    <ul class="mt-4 flex flex-col gap-2.5" role="list">
+      <li>
+        <button
+          type="button"
+          data-share-boleta
+          data-share-text={boletaShareText}
+          data-share-file={BOLETA_JPG_PATH}
+          data-share-filename={BOLETA_JPG_FILENAME}
+          data-share-fallback={waBoletaFallback}
+          class="share-action"
+        >
+          <span class="share-action__icon" aria-hidden="true" set:html={WA_ICON} />
+          <span data-share-label>Compartir la boleta</span>
+        </button>
+      </li>
+      <li>
+        <a href={waSitio} target="_blank" rel="noopener noreferrer" class="share-action">
+          <span class="share-action__icon" aria-hidden="true" set:html={WA_ICON} />
+          <span>Compartir el sitio</span>
+        </a>
+      </li>
+      <li>
+        <a href={waFecha} target="_blank" rel="noopener noreferrer" class="share-action">
+          <span class="share-action__icon" aria-hidden="true" set:html={WA_ICON} />
+          <span>Recordar la fecha: 3 de noviembre</span>
+        </a>
+      </li>
+      <li>
+        <a href={waLista} target="_blank" rel="noopener noreferrer" class="share-action">
+          <span class="share-action__icon" aria-hidden="true" set:html={WA_ICON} />
+          <span>Buscate en la lista</span>
+        </a>
+      </li>
+      <li>
+        <a href={waSumate} target="_blank" rel="noopener noreferrer" class="share-action">
+          <span class="share-action__icon" aria-hidden="true" set:html={WA_ICON} />
+          <span>Sumate</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="mt-5 flex flex-col items-center gap-3 text-center">
+      <a href={BOLETA_JPG_PATH} download class="font-body text-sm font-semibold text-primary-dark underline underline-offset-2 hover:text-primary">
+        Descargar la boleta
+      </a>
+      <button
+        type="button"
+        id="share-modal-dismiss"
+        class="inline-flex min-h-[44px] w-full items-center justify-center rounded-full border border-dark/15 px-6 font-body text-sm font-semibold text-dark/70 transition-colors hover:border-dark/30 hover:text-dark"
+      >
+        Seguir navegando
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  /* Tailwind's @apply/utility classes can't express this repeated compound
+     pattern cleanly across 5 buttons/links, so it lives as one scoped rule. */
+  .share-action {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 48px;
+    width: 100%;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in srgb, var(--color-dark) 10%, transparent);
+    background: #fff;
+    padding: 0.625rem 1rem;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-dark);
+    text-align: left;
+    transition: border-color 0.2s, background-color 0.2s;
+  }
+  .share-action:hover {
+    border-color: var(--color-secondary);
+    background: color-mix(in srgb, var(--color-secondary) 6%, white);
+  }
+  .share-action:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+  .share-action__icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--color-secondary) 12%, white);
+    color: var(--color-secondary-dark);
+  }
+</style>
+
+<script define:vars={{ boletaShareText, boletaJpgPath: BOLETA_JPG_PATH, boletaFilename: BOLETA_JPG_FILENAME, boletaFallback: waBoletaFallback }}>
+  (function () {
+    var dialog = document.getElementById('share-modal');
+    if (!dialog || typeof dialog.showModal !== 'function') return;
+
+    var opened = false;
+    var lastFocused = null;
+
+    function openModal() {
+      if (opened || dialog.open) return;
+      opened = true;
+      lastFocused = document.activeElement;
+      try {
+        dialog.showModal();
+      } catch (err) {
+        opened = false;
+      }
+    }
+
+    function closeModal() {
+      if (dialog.open) dialog.close();
+    }
+
+    function scheduleOpen() {
+      function trigger() {
+        setTimeout(openModal, 700);
+      }
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(trigger, { timeout: 2000 });
+      } else {
+        trigger();
+      }
+    }
+
+    if (document.readyState === 'complete') {
+      scheduleOpen();
+    } else {
+      window.addEventListener('load', scheduleOpen, { once: true });
+    }
+
+    document.getElementById('share-modal-close')?.addEventListener('click', closeModal);
+    document.getElementById('share-modal-dismiss')?.addEventListener('click', closeModal);
+
+    // Backdrop click: the click target is the dialog element itself only when
+    // the click lands outside the inner content box.
+    dialog.addEventListener('click', function (e) {
+      if (e.target === dialog) closeModal();
+    });
+
+    dialog.addEventListener('close', function () {
+      if (lastFocused && typeof lastFocused.focus === 'function') {
+        lastFocused.focus();
+      }
+    });
+
+    // Boleta share: Web Share API with the JPG as a File when supported,
+    // falling back to a wa.me link. Wired to every [data-share-boleta] on the
+    // page — the modal's own button and the /boleta page's button share it.
+    var shareButtons = document.querySelectorAll('[data-share-boleta]');
+    shareButtons.forEach(function (btn) {
+      var label = btn.querySelector('[data-share-label]') || btn;
+      var originalText = label.textContent;
+      var fallbackUrl = btn.getAttribute('data-share-fallback') || boletaFallback;
+      var shareText = btn.getAttribute('data-share-text') || boletaShareText;
+      var filePath = btn.getAttribute('data-share-file') || boletaJpgPath;
+      var fileName = btn.getAttribute('data-share-filename') || boletaFilename;
+
+      btn.addEventListener('click', async function () {
+        var canTryFileShare = !!(navigator.share && navigator.canShare && window.File);
+
+        if (canTryFileShare) {
+          btn.setAttribute('aria-busy', 'true');
+          btn.disabled = true;
+          label.textContent = 'Preparando la boleta…';
+
+          try {
+            var res = await fetch(filePath);
+            var blob = await res.blob();
+            var file = new File([blob], fileName, { type: 'image/jpeg' });
+
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({ files: [file], text: shareText });
+              btn.removeAttribute('aria-busy');
+              btn.disabled = false;
+              label.textContent = originalText;
+              return;
+            }
+          } catch (err) {
+            btn.removeAttribute('aria-busy');
+            btn.disabled = false;
+            label.textContent = originalText;
+            if (err && err.name === 'AbortError') return; // user cancelled the share sheet
+            // any other failure falls through to the wa.me link below
+          }
+
+          btn.removeAttribute('aria-busy');
+          btn.disabled = false;
+          label.textContent = originalText;
+        }
+
+        window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+      });
+    });
+  })();
+</script>

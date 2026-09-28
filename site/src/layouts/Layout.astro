@@ -3,20 +3,37 @@ import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import BottomNav from '../components/BottomNav.astro';
 import Footer from '../components/Footer.astro';
+import ShareModal from '../components/ShareModal.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../data/site';
 
 interface Props {
   title?: string;
   description?: string;
-  image?: string;
+  /** Per-page OG/Twitter image override. Defaults to the site's generic 1200×630 OG image. */
+  ogImage?: string;
+  ogImageWidth?: number;
+  ogImageHeight?: number;
+  ogImageType?: string;
+  ogImageAlt?: string;
   ogType?: string;
+  /** True renders `noindex, nofollow` (404 and other non-content pages). */
+  noindex?: boolean;
+  /** When set, renders a two-level "Inicio › <breadcrumbLabel>" BreadcrumbList JSON-LD.
+   * Omit on home and 404. */
+  breadcrumbLabel?: string;
 }
 
 const {
   title = SITE_TITLE,
   description = SITE_DESCRIPTION,
-  image = '/og.png',
+  ogImage = '/og.png',
+  ogImageWidth = 1200,
+  ogImageHeight = 630,
+  ogImageType = 'image/png',
+  ogImageAlt = SITE_TITLE,
   ogType = 'website',
+  noindex = false,
+  breadcrumbLabel,
 } = Astro.props;
 
 const FONTS_HREF =
@@ -24,7 +41,7 @@ const FONTS_HREF =
 
 const siteOrigin = Astro.site ? new URL(Astro.site).origin : 'https://ctamulticolor.com.ar';
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-const ogImageURL = new URL(image, siteOrigin).toString();
+const ogImageURL = new URL(ogImage, siteOrigin).toString();
 
 const organizationJsonLd = {
   '@context': 'https://schema.org',
@@ -44,6 +61,25 @@ const organizationJsonLd = {
     },
   },
 };
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE_TITLE,
+  url: siteOrigin,
+  inLanguage: 'es-AR',
+};
+
+const breadcrumbJsonLd = breadcrumbLabel
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${siteOrigin}/` },
+        { '@type': 'ListItem', position: 2, name: breadcrumbLabel, item: canonicalURL.toString() },
+      ],
+    }
+  : null;
 ---
 
 <!doctype html>
@@ -56,7 +92,7 @@ const organizationJsonLd = {
     <!-- SEO -->
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
     <meta name="author" content="Lista 6 Multicolor — CTA La Matanza" />
     <link rel="canonical" href={canonicalURL} />
 
@@ -66,9 +102,10 @@ const organizationJsonLd = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImageURL} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content={String(ogImageWidth)} />
+    <meta property="og:image:height" content={String(ogImageHeight)} />
+    <meta property="og:image:type" content={ogImageType} />
+    <meta property="og:image:alt" content={ogImageAlt} />
     <meta property="og:locale" content="es_AR" />
     <meta property="og:site_name" content="Lista 6 Multicolor" />
 
@@ -77,6 +114,7 @@ const organizationJsonLd = {
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageURL} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
 
     <!-- Theme color (mobile browser chrome) -->
     <meta name="theme-color" content="#C41E2A" />
@@ -96,6 +134,8 @@ const organizationJsonLd = {
     <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script> -->
 
     <script type="application/ld+json" set:html={JSON.stringify(organizationJsonLd)} />
+    <script type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)} />
+    {breadcrumbJsonLd && <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />}
   </head>
   <body class="min-h-screen bg-light text-dark antialiased pb-16 md:pb-0">
     <a href="#main" class="skip-link">Saltar al contenido principal</a>
@@ -105,5 +145,6 @@ const organizationJsonLd = {
     </main>
     <Footer />
     <BottomNav />
+    <ShareModal />
   </body>
 </html>
