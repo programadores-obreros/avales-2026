@@ -63,8 +63,9 @@ SUTEBA-teacher-specific section (ESI, estatuto docente, actos, concursos).
 - [ ] Review all 45 photos together with the user (`odd/data/foto_matches_v2.json`).
 - [ ] Propuestas, "Por qué la CTA" body, requisitos para votar, redes, contacto → `[PENDIENTE]`.
 - [x] Firebase project `cta-multicolor-2026` created by the user; hosting live.
-- [ ] Cloudflare DNS for `ctamulticolor.com.ar` → custom domain in Firebase Hosting;
-  needs user access/confirmation.
+- [x] Cloudflare DNS + Firebase custom domains done by the user (2026-09-28): apex A
+  199.36.158.100 + TXT, `www` CNAME; both serve 200 with their own certificates. `www` serves
+  the site (not a redirect); canonical tag points to the apex.
 
 ## Verification mode
 
@@ -90,7 +91,7 @@ check at 360px and desktop (claude-in-chrome, served over local HTTP).
 - [x] **T9 — Firebase.** `firebase.json` (security headers, 300 s HTML incl. clean URLs,
   immutable `_astro`, 1 day images, real 404), `.firebaserc`. Deployed to
   https://cta-multicolor-2026.web.app (goal authorized deploy). Commits `4e06d716`, `8dcb70e5`.
-  Custom domain pending (Cloudflare).
+  Custom domains https://ctamulticolor.com.ar and www live (2026-09-28).
 - [x] **T10 — QA.** Production: all pages 200, real 404, headers verified with curl;
   Chrome interaction pass, 0 console errors, 0 broken images; Lighthouse mobile (lh6):
   Home 100/100/100/100 (LCP 1.7 s), Lista 94/100/100/100 (LCP 3.1 s simulated; observed
@@ -100,9 +101,12 @@ check at 360px and desktop (claude-in-chrome, served over local HTTP).
 ## Progress
 
 - 2026-09-27: T1–T10 done and deployed. `astro check` 0 errors, `pnpm install
-  --frozen-lockfile` OK. Push not done (not authorized).
+  --frozen-lockfile` OK.
+- 2026-09-28: date confirmed, Sofía Vega photo on both cards, branch pushed, custom domain live.
 
 ## Next step
 
-User inputs: Decoud photo, photo review, texts,
-Cloudflare DNS → then connect `ctamulticolor.com.ar` in Firebase Hosting.
+User inputs: Decoud photo, photo review, campaign texts (propuestas, por qué la CTA,
+requisitos, redes, contacto).
+Tech debt (postponed by user): geocoded Leaflet map of workplaces — Engram
+`deuda/mapa-geocodificado-cta-lugares`.
