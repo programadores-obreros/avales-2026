@@ -21,7 +21,7 @@ const fechaFormateada = new Intl.DateTimeFormat('es-AR', {
 >
   <section class="bg-light pt-24 pb-16 md:pt-28 md:pb-24">
     <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-      <p class="text-center font-display text-xs font-bold uppercase tracking-[0.3em] text-primary/70">
+      <p class="text-center font-display text-xs font-bold uppercase tracking-[0.3em] text-primary-dark">
         Elecciones CTA La Matanza
       </p>
       <h1 class="mt-2 text-center font-display text-2xl font-black uppercase tracking-tight text-dark sm:text-4xl">
@@ -33,13 +33,13 @@ const fechaFormateada = new Intl.DateTimeFormat('es-AR', {
       <div class="mt-10 rounded-2xl bg-white p-6 text-center shadow-sm sm:p-8">
         {
           !ELECTION_DATE_CONFIRMED && (
-            <p class="mb-3 inline-flex items-center gap-1.5 rounded-full border border-golden/50 bg-golden/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-golden">
+            <p class="mb-3 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary-dark">
               Fecha estimada — a confirmar
             </p>
           )
         }
         <p class="font-display text-2xl font-black capitalize text-dark sm:text-3xl">{fechaFormateada}</p>
-        <p class="mt-2 font-body text-sm text-dark/60">
+        <p class="mt-2 font-body text-sm text-dark/70">
           {ELECTION_DATE_CONFIRMED
             ? 'Fecha confirmada por la CTA La Matanza.'
             : 'Todavía no hay fecha oficial confirmada para La Matanza. Actualizamos este dato en cuanto la central lo publique.'}
@@ -48,7 +48,7 @@ const fechaFormateada = new Intl.DateTimeFormat('es-AR', {
 
       <!-- Dónde voto -->
       <div class="mt-8 rounded-2xl border-2 border-dashed border-sky/50 bg-sky/10 p-6">
-        <p class="flex items-center gap-2 font-display text-xs font-bold uppercase tracking-widest text-sky">
+        <p class="flex items-center gap-2 font-display text-xs font-bold uppercase tracking-widest text-dark">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="16" x2="12" y2="12" />

@@ -72,7 +72,7 @@ const navItems = [
             aria-current={active ? 'page' : undefined}
             class:list={[
               'relative flex flex-col items-center justify-center gap-1 w-full h-full transition-colors duration-200',
-              active ? 'text-primary' : 'text-dark/40 hover:text-dark/70',
+              active ? 'text-primary' : 'text-dark/70 hover:text-dark',
             ]}
           >
             {active && (
@@ -84,7 +84,7 @@ const navItems = [
             <span class="relative" set:html={icon} />
             <span
               class:list={[
-                'text-[10px] font-medium tracking-tight leading-none',
+                'text-[11px] font-medium tracking-tight leading-none',
                 active ? 'font-semibold' : '',
               ]}
             >

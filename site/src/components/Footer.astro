@@ -8,7 +8,7 @@ const year = new Date().getFullYear();
 const hayRedes = Object.values(REDES).some((v) => v !== null);
 ---
 
-<footer class="relative border-t border-dark/10 bg-dark text-white/80" aria-label="Pie de página">
+<footer class="relative border-t border-dark/10 bg-dark text-white" aria-label="Pie de página">
   <div class="gradient-multi-horizontal h-1 w-full"></div>
   <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
     <div class="grid gap-8 sm:grid-cols-3">
@@ -18,7 +18,7 @@ const hayRedes = Object.values(REDES).some((v) => v !== null);
       </div>
 
       <nav aria-label="Enlaces del pie">
-        <p class="font-display text-xs font-bold uppercase tracking-widest text-white/40">Navegación</p>
+        <p class="font-display text-xs font-bold uppercase tracking-widest text-white/70">Navegación</p>
         <ul class="mt-3 flex flex-col gap-2 font-body text-sm" role="list">
           <li><a href="/lista" class="hover:text-white transition-colors">La Lista</a></li>
           <li><a href="/por-que-la-cta" class="hover:text-white transition-colors">Por qué la CTA</a></li>
@@ -28,7 +28,7 @@ const hayRedes = Object.values(REDES).some((v) => v !== null);
       </nav>
 
       <div>
-        <p class="font-display text-xs font-bold uppercase tracking-widest text-white/40">Contacto</p>
+        <p class="font-display text-xs font-bold uppercase tracking-widest text-white/70">Contacto</p>
         <div class="mt-3 font-body text-sm">
           {
             CONTACTO_EMAIL ? (
@@ -46,7 +46,7 @@ const hayRedes = Object.values(REDES).some((v) => v !== null);
       </div>
     </div>
 
-    <div class="mt-10 border-t border-white/10 pt-6 text-center font-body text-xs text-white/40">
+    <div class="mt-10 border-t border-white/10 pt-6 text-center font-body text-xs text-white/70">
       <p>&copy; {year} {LISTA_NOMBRE} — CTA La Matanza.</p>
     </div>
   </div>

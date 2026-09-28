@@ -23,7 +23,7 @@ const totalCandidaturas = CANDIDATURAS.length;
   <section class="bg-light pt-24 pb-16 md:pt-28 md:pb-24">
     <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
       <div class="text-center">
-        <p class="font-display text-xs font-bold uppercase tracking-[0.3em] text-primary/70">Lista 6 Multicolor</p>
+        <p class="font-display text-xs font-bold uppercase tracking-[0.3em] text-primary-dark">Lista 6 Multicolor</p>
         <h1 class="mt-2 font-display text-2xl font-black uppercase tracking-tight text-dark sm:text-4xl">
           Lxs candidatxs de la <span class="text-gradient-multi">Lista 6 Multicolor</span> La Matanza
         </h1>
@@ -57,7 +57,7 @@ const totalCandidaturas = CANDIDATURAS.length;
             class="w-full min-h-[44px] rounded-full border border-dark/15 bg-white py-3 pl-11 pr-4 font-body text-sm text-dark shadow-sm transition focus:border-primary"
           />
         </div>
-        <p id="cand-search-status" class="mt-2 text-center text-xs text-dark/50" aria-live="polite">
+        <p id="cand-search-status" class="mt-2 text-center text-xs text-dark/70" aria-live="polite">
           {CANDIDATURAS.length} candidaturas en total
         </p>
       </div>
@@ -66,37 +66,37 @@ const totalCandidaturas = CANDIDATURAS.length;
       <!-- Mobile: one swipeable row (a wrapped grid of 6 chips pushed the list below the fold). -->
       <div id="bloque-filters" class="-mx-4 mt-6 flex snap-x gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] *:shrink-0 *:snap-start *:whitespace-nowrap md:mx-0 md:flex-wrap md:justify-center md:overflow-visible md:px-0" role="group" aria-label="Filtrar por bloque">
         <button type="button" data-filter="all" class="bloque-filter-btn is-active" aria-pressed="true">
-          Todxs <span class="opacity-60">({CANDIDATURAS.length})</span>
+          Todxs <span class="font-normal">({CANDIDATURAS.length})</span>
         </button>
         {grouped.map((b) => (
           <button type="button" data-filter={b.id} class="bloque-filter-btn" aria-pressed="false">
-            {b.titulo} <span class="opacity-60">({b.candidaturas.length})</span>
+            {b.titulo} <span class="font-normal">({b.candidaturas.length})</span>
           </button>
         ))}
       </div>
 
       <!-- Groups -->
       <div id="cand-groups" class="mt-12 flex flex-col gap-14">
-        {grouped.map((b) => (
+        {grouped.map((b, gi) => (
           <div data-bloque-group={b.id}>
             <div class="mb-5 flex items-baseline justify-between gap-3 border-b border-dark/10 pb-2">
               <h2 class="font-display text-lg font-black uppercase tracking-tight text-dark sm:text-xl">
                 {b.titulo}
               </h2>
-              <span class="shrink-0 font-body text-xs font-semibold text-dark/50">
+              <span class="shrink-0 font-body text-xs font-semibold text-dark/70">
                 {b.candidaturas.length} {b.candidaturas.length === 1 ? 'candidatx' : 'candidatxs'}
               </span>
             </div>
             {b.candidaturas.length === 0 ? (
-              <p class="rounded-xl bg-white p-6 text-center text-sm text-dark/50 italic shadow-sm">
+              <p class="rounded-xl bg-white p-6 text-center text-sm text-dark/70 italic shadow-sm">
                 Todavía no hay candidaturas cargadas en este bloque (contenido de ejemplo pendiente de
                 reemplazo por la transcripción oficial).
               </p>
             ) : (
               <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4">
-                {b.candidaturas.map((c) => (
+                {b.candidaturas.map((c, i) => (
                   <div data-cand-item data-cand-nombre={c.nombre} data-cand-bloque={c.bloque}>
-                    <CandidatoCard candidatura={c} bloqueLabel={b.titulo} />
+                    <CandidatoCard candidatura={c} bloqueLabel={b.titulo} loading={gi === 0 && i < 2 ? 'eager' : 'lazy'} />
                   </div>
                 ))}
               </div>
@@ -105,7 +105,7 @@ const totalCandidaturas = CANDIDATURAS.length;
         ))}
       </div>
 
-      <p id="cand-empty" class="mt-10 hidden text-center text-sm text-dark/50 italic" aria-live="polite">
+      <p id="cand-empty" class="mt-10 hidden text-center text-sm text-dark/70 italic" aria-live="polite">
         No encontramos candidatxs con ese nombre.
       </p>
     </div>

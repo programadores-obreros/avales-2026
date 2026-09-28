@@ -7,6 +7,8 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://ctamulticolor.com.ar',
   output: 'static',
+  // Site CSS is small: inlining removes a render-blocking request (mobile LCP).
+  build: { inlineStylesheets: 'always' },
   integrations: [
     sitemap({
       changefreq: 'weekly',

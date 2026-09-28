@@ -54,6 +54,7 @@ const bloqueGradient: Record<Bloque, string> = {
           width="320"
           height="320"
           loading={loading}
+          fetchpriority={loading === 'eager' ? 'high' : undefined}
           decoding="async"
           class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
         />
@@ -70,10 +71,12 @@ const bloqueGradient: Record<Bloque, string> = {
     }
     <span
       class:list={[
-        'absolute top-2 left-2 rounded-full px-2 py-0.5 font-display text-[9px] font-bold uppercase tracking-wide text-white shadow-sm',
-        tone === 'primary' && 'bg-primary',
-        tone === 'accent' && 'bg-accent',
-        tone === 'secondary' && 'bg-secondary',
+        // Color pairs chosen for >= 4.5:1 at this small size; the base class sets no text color
+        // (it used to set text-white, which clashed with text-dark on the light tones).
+        'absolute top-2 left-2 rounded-full px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-wide shadow-sm',
+        tone === 'primary' && 'bg-primary text-white',
+        tone === 'accent' && 'bg-accent-dark text-white',
+        tone === 'secondary' && 'bg-secondary text-white',
         tone === 'golden' && 'bg-golden text-dark',
         tone === 'sky' && 'bg-sky text-dark',
       ]}

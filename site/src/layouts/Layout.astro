@@ -19,6 +19,9 @@ const {
   ogType = 'website',
 } = Astro.props;
 
+const FONTS_HREF =
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap';
+
 const siteOrigin = Astro.site ? new URL(Astro.site).origin : 'https://ctamulticolor.com.ar';
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const ogImageURL = new URL(image, siteOrigin).toString();
@@ -84,10 +87,10 @@ const organizationJsonLd = {
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Non-blocking: the font CSS was the render-blocking request behind a 3.1s mobile FCP. -->
+    <link rel="preload" as="style" href={FONTS_HREF} />
+    <link rel="stylesheet" href={FONTS_HREF} media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href={FONTS_HREF} /></noscript>
 
     <!-- Analytics: no ID configured yet — add a real GA/Plausible property before launch. -->
     <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script> -->
