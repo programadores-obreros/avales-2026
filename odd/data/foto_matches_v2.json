@@ -1,0 +1,222 @@
+{
+ "secretariado-1": {
+  "num": 8,
+  "slug": "juan-romero"
+ },
+ "secretariado-2": {
+  "num": 7,
+  "slug": "valeria-coronel"
+ },
+ "secretariado-3": {
+  "num": 35,
+  "slug": "lorena-barbuto"
+ },
+ "secretariado-4": {
+  "num": 60,
+  "slug": "aldana-rojas"
+ },
+ "secretariado-6": {
+  "num": 44,
+  "slug": "ernesto-settembrini"
+ },
+ "secretariado-7": {
+  "num": 38,
+  "slug": "duilio-petrungaro"
+ },
+ "secretariado-8": {
+  "num": 51,
+  "slug": "ma-veronica-barrera"
+ },
+ "secretariado-9": {
+  "num": 29,
+  "slug": "silvia-martin"
+ },
+ "secretariado-10": {
+  "num": 40,
+  "slug": "rosana-espada"
+ },
+ "secretariado-11": {
+  "num": 46,
+  "slug": "sandra-garbarino"
+ },
+ "vocales-1": {
+  "num": 50,
+  "slug": "sabrina-molina"
+ },
+ "vocales-2": {
+  "num": 13,
+  "slug": "nancy-farias"
+ },
+ "vocales-4": {
+  "num": 15,
+  "slug": "giuliana-rojas"
+ },
+ "vocales-5": {
+  "num": 26,
+  "slug": "andres-machuca"
+ },
+ "vocales-6": {
+  "num": 74,
+  "slug": "anabella-melian"
+ },
+ "vocales-7": {
+  "num": 28,
+  "slug": "mario-luaces"
+ },
+ "vocales-9": {
+  "num": 81,
+  "slug": "gabriela-zaragoza"
+ },
+ "revisora-1": {
+  "num": 85,
+  "slug": "fabiana-torres"
+ },
+ "revisora-2": {
+  "num": 89,
+  "slug": "paula-garcia"
+ },
+ "revisora-3": {
+  "num": 17,
+  "slug": "laura-elizalde"
+ },
+ "revisora-4": {
+  "num": 103,
+  "slug": "susana-barraza"
+ },
+ "revisora-6": {
+  "num": 48,
+  "slug": "ezequiel-vicentela"
+ },
+ "congresales-titulares-1": {
+  "num": 63,
+  "slug": "carmen-acuna"
+ },
+ "congresales-titulares-2": {
+  "num": 7,
+  "slug": "valeria-coronel"
+ },
+ "congresales-titulares-3": {
+  "num": 35,
+  "slug": "lorena-barbuto"
+ },
+ "congresales-titulares-4": {
+  "num": 60,
+  "slug": "aldana-rojas"
+ },
+ "congresales-titulares-5": {
+  "num": 32,
+  "slug": "nestor-souza"
+ },
+ "congresales-titulares-6": {
+  "num": 83,
+  "slug": "sonia-brito"
+ },
+ "congresales-titulares-7": {
+  "num": 38,
+  "slug": "duilio-petrungaro"
+ },
+ "congresales-titulares-8": {
+  "num": 51,
+  "slug": "ma-veronica-barrera"
+ },
+ "congresales-titulares-9": {
+  "num": 29,
+  "slug": "silvia-martin"
+ },
+ "congresales-titulares-10": {
+  "num": 104,
+  "slug": "juan-bautista-rojas"
+ },
+ "congresales-titulares-11": {
+  "num": 55,
+  "slug": "yanina-farias"
+ },
+ "congresales-titulares-12": {
+  "num": 28,
+  "slug": "mario-luaces"
+ },
+ "congresales-titulares-14": {
+  "num": 15,
+  "slug": "giuliana-rojas"
+ },
+ "congresales-titulares-15": {
+  "num": 26,
+  "slug": "andres-machuca"
+ },
+ "congresales-titulares-17": {
+  "num": 96,
+  "slug": "sergio-almiron"
+ },
+ "congresales-titulares-19": {
+  "num": 81,
+  "slug": "gabriela-zaragoza"
+ },
+ "congresales-titulares-21": {
+  "num": 75,
+  "slug": "teresa-ugarte"
+ },
+ "congresales-titulares-22": {
+  "num": 67,
+  "slug": "elizabeth-ayala"
+ },
+ "congresales-titulares-23": {
+  "num": 79,
+  "slug": "sofia-vega"
+ },
+ "congresales-titulares-25": {
+  "num": 36,
+  "slug": "patricia-riquelme"
+ },
+ "congresales-titulares-26": {
+  "num": 68,
+  "slug": "veronica-caminos"
+ },
+ "congresales-titulares-31": {
+  "num": 101,
+  "slug": "federico-largente"
+ },
+ "congresales-titulares-32": {
+  "num": 100,
+  "slug": "francisco-leiva"
+ },
+ "congresales-titulares-33": {
+  "num": 43,
+  "slug": "sofia-perez"
+ },
+ "congresales-titulares-36": {
+  "num": 113,
+  "slug": "diego-vazquez"
+ },
+ "congresales-titulares-50": {
+  "num": 37,
+  "slug": "sabrina-andrada"
+ },
+ "congresales-titulares-51": {
+  "num": 98,
+  "slug": "silvia-nunez"
+ },
+ "congresales-titulares-56": {
+  "num": 109,
+  "slug": "rodrigo-romero"
+ },
+ "congresales-titulares-57": {
+  "num": 53,
+  "slug": "juan-jose-rodriguez"
+ },
+ "congresales-titulares-60": {
+  "num": 65,
+  "slug": "victor-ledesma"
+ },
+ "congresales-suplentes-5": {
+  "num": 64,
+  "slug": "rebeca-gonzalez"
+ },
+ "congresales-suplentes-7": {
+  "num": 72,
+  "slug": "giselle-segovia"
+ },
+ "congresales-suplentes-12": {
+  "num": 90,
+  "slug": "jimena-robles"
+ }
+}
