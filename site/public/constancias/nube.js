@@ -60,6 +60,15 @@ export async function borrarFiscal(id){
   await fs.deleteDoc(fs.doc(db, 'fiscales', id));
 }
 
+// ---------- padrón de afiliados (consulta de a un DNI) ----------
+// Devuelve "Apellido Nombre" o null si no está. En modo prueba no hay padrón.
+export async function buscarPadron(dni){
+  if(modoPrueba) return null;
+  await cargarSdk();
+  const s = await fs.getDoc(fs.doc(db, 'padron', dni));
+  return s.exists() ? s.data().n : null;
+}
+
 // ---------- diseño compartido ----------
 const LS_DISENO = 'cta-prueba-diseno';
 export async function leerDiseno(){

@@ -23,6 +23,12 @@ service cloud.firestore {
         && request.resource.data.creadoEn == resource.data.creadoEn;
     }
 
+    // Padrón de afiliados CTA La Matanza (solo DNI → apellido y nombre). Consulta de a un DNI:
+    // ni con la clave se puede listar/descargar entero. Se carga por fuera (admin), nunca desde la web.
+    match /padron/{dni} {
+      allow get: if esEquipo();
+    }
+
     match /config/diseno {
       allow read: if esEquipo();
       allow write: if esEquipo()

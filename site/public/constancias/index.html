@@ -43,7 +43,9 @@
   section.paso{ background:var(--blanco); border-radius:14px; padding:18px 16px; box-shadow:0 2px 10px -6px rgba(0,0,0,.2); }
   section.paso h2{ font-size:19px; display:flex; align-items:center; gap:10px; margin-bottom:12px; }
   .num{ display:inline-flex; width:30px; height:30px; border-radius:50%; background:var(--rojo); color:#fff; align-items:center; justify-content:center; font-size:16px; flex:none; }
-  .grilla{ display:grid; grid-template-columns:140px 1fr 200px; gap:12px; }
+  .grilla{ display:grid; grid-template-columns:200px 1fr 140px; gap:12px; }
+  .padron{ min-height:1.4em; margin-top:8px; font-size:15px; color:var(--suave); }
+  .padron.si{ color:var(--verde); font-weight:600; } .padron.no{ color:#9a6700; font-weight:600; }
   .grilla > div{ min-width:0; }
   details{ margin-top:12px; } summary{ cursor:pointer; color:var(--suave); }
   .grilla3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:10px; }
@@ -107,10 +109,11 @@
       <h2><span class="num">1</span> <span id="tituloForm">Cargá un compañero o compañera</span></h2>
       <form id="formFiscal" autocomplete="off">
         <div class="grilla">
-          <div><label class="campo-form" for="fMesa">Mesa N°</label><input class="entrada" id="fMesa" inputmode="numeric" maxlength="10" required></div>
-          <div><label class="campo-form" for="fNombre">Nombre y apellido</label><input class="entrada" id="fNombre" maxlength="80" required></div>
           <div><label class="campo-form" for="fDni">DNI (solo números)</label><input class="entrada" id="fDni" inputmode="numeric" maxlength="10" required></div>
+          <div><label class="campo-form" for="fNombre">Apellido y nombre</label><input class="entrada" id="fNombre" maxlength="80" required></div>
+          <div><label class="campo-form" for="fMesa">Mesa N°</label><input class="entrada" id="fMesa" inputmode="numeric" maxlength="10" required></div>
         </div>
+        <div class="padron" id="padronMsg"></div>
         <details id="otros">
           <summary>Otros datos (ya vienen completos: La Matanza · Bs. As. · Fiscal Lista 6)</summary>
           <div class="grilla3">
@@ -190,9 +193,34 @@ function limpiarForm(){
   $('fLocalidad').value = H.CAMPOS_FIJOS.localidad; $('fProvincia').value = H.CAMPOS_FIJOS.provincia; $('fRol').value = H.CAMPOS_FIJOS.rol;
   $('tituloForm').textContent = 'Cargá un compañero o compañera';
   $('btnGuardar').textContent = 'Agregar a la lista'; $('btnCancelar').classList.add('oculto'); $('errorFiscal').textContent = '';
+  avisoPadron(''); nombreAuto = false;
 }
 $('btnCancelar').addEventListener('click', limpiarForm);
-$('fDni').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
+// DNI → busca en el padrón y completa apellido y nombre (si no está, se escribe a mano)
+let nombreAuto = false, consulta = 0, espera = null;
+$('fNombre').addEventListener('input', () => { nombreAuto = false; });
+function avisoPadron(texto, clase){ $('padronMsg').textContent = texto; $('padronMsg').className = 'padron' + (clase ? ' ' + clase : ''); }
+$('fDni').addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/\D/g, '');
+  const dni = e.target.value.replace(/^0+/, '');
+  clearTimeout(espera);
+  if(nombreAuto){ $('fNombre').value = ''; nombreAuto = false; }
+  if(nube.modoPrueba || !/^\d{7,9}$/.test(dni)){ avisoPadron(''); return; }
+  avisoPadron('Buscando en el padrón…');
+  espera = setTimeout(async () => {
+    const n = ++consulta;
+    let nombre = null;
+    try{ nombre = await nube.buscarPadron(dni); }catch(err){ if(n === consulta) avisoPadron('No se pudo consultar el padrón: escribí el nombre a mano.', 'no'); return; }
+    if(n !== consulta) return;
+    if(nombre){
+      if(!$('fNombre').value.trim() || nombreAuto){ $('fNombre').value = nombre; nombreAuto = true; }
+      avisoPadron('✓ Está en el padrón: ' + nombre, 'si');
+      if(!editando) $('fMesa').focus();
+    }else{
+      avisoPadron('No está en el padrón. Escribí el apellido y nombre a mano.', 'no');
+    }
+  }, 350);
+});
 
 $('formFiscal').addEventListener('submit', async e => {
   e.preventDefault(); $('errorFiscal').textContent = ''; $('okFiscal').textContent = '';
