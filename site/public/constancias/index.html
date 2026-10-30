@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Constancias de Fiscales · Lista 6</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Inter:wght@400;500;600&family=Reenie+Beanie&family=Shadows+Into+Light&family=Indie+Flower&family=Covered+By+Your+Grace&family=Caveat&display=block">
+<link rel="stylesheet" href="hoja.css">
+<style>
+  :root{ --rojo:#C41E2A; --rojo-osc:#A31722; --verde:#2E7D32; --tinta:#1A1A1A; --suave:#5f5f5f; --linea:#ddd; --fondo:#FAFAFA; --blanco:#fff; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--fondo); color:var(--tinta); }
+  body{ font-family:Inter, system-ui, Arial, sans-serif; font-size:17px; line-height:1.45; }
+  h1,h2{ font-family:Montserrat, Arial, sans-serif; margin:0; }
+  button, input{ font:inherit; }
+  .oculto{ display:none !important; }
+
+  /* ---------- ingreso ---------- */
+  #ingreso{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:16px; }
+  .tarjeta{ background:var(--blanco); border-radius:14px; box-shadow:0 10px 30px -12px rgba(0,0,0,.25); padding:28px 24px; width:100%; max-width:420px; }
+  .tarjeta h1{ font-size:24px; color:var(--rojo); }
+  .tarjeta p{ color:var(--suave); margin:6px 0 20px; }
+  label.campo-form{ display:block; font-weight:600; margin:0 0 6px; }
+  input.entrada{ width:100%; padding:13px 14px; border:2px solid #cfcfcf; border-radius:10px; font-size:18px; background:#fff; }
+  input.entrada:focus{ border-color:var(--rojo); outline:none; }
+  .boton{ display:inline-flex; align-items:center; justify-content:center; gap:8px; border:0; border-radius:10px; padding:13px 20px;
+    font-weight:600; font-size:17px; cursor:pointer; background:var(--rojo); color:#fff; }
+  .boton:hover{ background:var(--rojo-osc); }
+  .boton.gris{ background:#eee; color:var(--tinta); } .boton.gris:hover{ background:#e2e2e2; }
+  .boton.verde{ background:var(--verde); } .boton.verde:hover{ background:#1B5E20; }
+  .boton.chico{ padding:8px 12px; font-size:15px; }
+  .boton:disabled{ opacity:.5; cursor:not-allowed; }
+  .error{ color:var(--rojo); font-weight:600; min-height:1.4em; margin-top:10px; }
+  .ojo{ display:flex; align-items:center; gap:8px; margin-top:10px; color:var(--suave); font-size:15px; }
+
+  /* ---------- app ---------- */
+  header.barra{ background:var(--tinta); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  header.barra h1{ font-size:19px; flex:1; min-width:220px; }
+  header.barra a, header.barra button{ color:#fff; }
+  .contenedor{ max-width:980px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:18px; }
+  .aviso-prueba{ background:#fff3cd; border:1px solid #f0d27a; color:#6b5200; padding:10px 14px; border-radius:10px; font-size:15px; }
+  section.paso{ background:var(--blanco); border-radius:14px; padding:18px 16px; box-shadow:0 2px 10px -6px rgba(0,0,0,.2); }
+  section.paso h2{ font-size:19px; display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .num{ display:inline-flex; width:30px; height:30px; border-radius:50%; background:var(--rojo); color:#fff; align-items:center; justify-content:center; font-size:16px; flex:none; }
+  .grilla{ display:grid; grid-template-columns:140px 1fr 200px; gap:12px; }
+  .grilla > div{ min-width:0; }
+  details{ margin-top:12px; } summary{ cursor:pointer; color:var(--suave); }
+  .grilla3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:10px; }
+  .acciones{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center; }
+  .ok{ color:var(--verde); font-weight:600; }
+  .buscar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+  .buscar input{ flex:1; min-width:200px; }
+  table{ width:100%; border-collapse:collapse; }
+  th, td{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--linea); vertical-align:middle; }
+  th{ font-size:14px; color:var(--suave); font-weight:600; }
+  td.chk, th.chk{ width:44px; } input[type=checkbox]{ width:22px; height:22px; }
+  td.botones{ white-space:nowrap; text-align:right; }
+  .vacio{ color:var(--suave); padding:18px 0; text-align:center; }
+  .confirmar{ display:inline-flex; gap:6px; align-items:center; }
+  .imprimir-caja{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .ayuda{ color:var(--suave); font-size:15px; margin:10px 0 0; }
+  .pie{ text-align:center; color:var(--suave); font-size:14px; padding:6px 0 24px; }
+  .pie a{ color:var(--suave); }
+
+  @media (max-width:720px){
+    .grilla, .grilla3{ grid-template-columns:1fr; }
+    th.col-dni, td.col-dni{ display:none; }
+  }
+
+  /* ---------- impresión: solo las hojas, una por página ---------- */
+  #impresion{ position:absolute; left:-10000px; top:0; }
+  @page{ size:A4; margin:0; }
+  @media print{
+    html,body{ background:#fff; }
+    #ingreso, #app{ display:none !important; }
+    #impresion{ position:static; }
+    #impresion .hoja{ break-after:page; page-break-after:always; }
+    #impresion .hoja:last-child{ break-after:auto; page-break-after:auto; }
+  }
+</style>
+</head>
+<body>
+
+<div id="ingreso" class="oculto">
+  <form class="tarjeta" id="formIngreso" autocomplete="off">
+    <h1>Constancias de Fiscales</h1>
+    <p>Lista 6 Multicolor · CTA-T La Matanza · Formulario N°3</p>
+    <label class="campo-form" for="clave">Clave</label>
+    <input class="entrada" id="clave" type="password" autocomplete="current-password" required>
+    <label class="ojo"><input type="checkbox" id="verClave"> Mostrar la clave</label>
+    <div class="error" id="errorIngreso"></div>
+    <button class="boton" type="submit" id="btnEntrar" style="width:100%">Entrar</button>
+  </form>
+</div>
+
+<div id="app" class="oculto">
+  <header class="barra">
+    <h1>Constancias de Fiscales · Lista 6</h1>
+    <button class="boton gris chico" id="btnSalir" type="button" style="color:var(--tinta)">Salir</button>
+  </header>
+
+  <div class="contenedor">
+    <div class="aviso-prueba oculto" id="avisoPrueba"><b>Modo prueba:</b> la nube todavía no está configurada. Lo que cargues queda solo en esta computadora.</div>
+
+    <section class="paso">
+      <h2><span class="num">1</span> <span id="tituloForm">Cargá un compañero o compañera</span></h2>
+      <form id="formFiscal" autocomplete="off">
+        <div class="grilla">
+          <div><label class="campo-form" for="fMesa">Mesa N°</label><input class="entrada" id="fMesa" inputmode="numeric" maxlength="10" required></div>
+          <div><label class="campo-form" for="fNombre">Nombre y apellido</label><input class="entrada" id="fNombre" maxlength="80" required></div>
+          <div><label class="campo-form" for="fDni">DNI (solo números)</label><input class="entrada" id="fDni" inputmode="numeric" maxlength="10" required></div>
+        </div>
+        <details id="otros">
+          <summary>Otros datos (ya vienen completos: La Matanza · Bs. As. · Fiscal Lista 6)</summary>
+          <div class="grilla3">
+            <div><label class="campo-form" for="fLocalidad">Localidad</label><input class="entrada" id="fLocalidad" maxlength="40"></div>
+            <div><label class="campo-form" for="fProvincia">Provincia</label><input class="entrada" id="fProvincia" maxlength="40"></div>
+            <div><label class="campo-form" for="fRol">Se designa como</label><input class="entrada" id="fRol" maxlength="40"></div>
+          </div>
+        </details>
+        <div class="error" id="errorFiscal"></div>
+        <div class="acciones">
+          <button class="boton" type="submit" id="btnGuardar">Agregar a la lista</button>
+          <button class="boton gris oculto" type="button" id="btnCancelar">Cancelar</button>
+          <span class="ok" id="okFiscal"></span>
+        </div>
+      </form>
+    </section>
+
+    <section class="paso">
+      <h2><span class="num">2</span> Revisá la lista <span id="contador" style="font-weight:500;color:var(--suave);font-family:Inter,sans-serif;font-size:16px"></span></h2>
+      <div class="buscar">
+        <input class="entrada" id="buscar" placeholder="Buscar por nombre, DNI o mesa">
+      </div>
+      <table>
+        <thead><tr><th class="chk"><input type="checkbox" id="todos" title="Elegir todos"></th><th>Mesa</th><th>Nombre y apellido</th><th class="col-dni">DNI</th><th></th></tr></thead>
+        <tbody id="tabla"></tbody>
+      </table>
+    </section>
+
+    <section class="paso">
+      <h2><span class="num">3</span> Imprimí</h2>
+      <div class="imprimir-caja">
+        <button class="boton verde" type="button" id="btnImprimir" disabled>Imprimir las elegidas</button>
+        <span id="elegidas" style="color:var(--suave)"></span>
+      </div>
+      <p class="ayuda">Sale una hoja A4 por cada compañero o compañera. En la ventana que se abre podés elegir tu impresora o <b>"Guardar como PDF"</b>. Si aparecen márgenes o encabezados, desactivalos en "Más opciones".</p>
+      <p class="ayuda">Después de imprimir, falta el sello rojo y las firmas a mano antes de entregarlas.</p>
+    </section>
+
+    <div class="pie"><a href="ajustar.html">Ajustar el diseño del formulario (opcional)</a></div>
+  </div>
+</div>
+
+<div id="impresion"></div>
+
+<script src="hoja.js"></script>
+<script type="module">
+import * as nube from './nube.js';
+const $ = id => document.getElementById(id);
+const H = window.Hoja;
+
+let fiscales = [], elegidos = new Set(), editando = null, diseno = H.DISENO, cancelarEscucha = null;
+
+// ---------- ingreso ----------
+$('verClave').addEventListener('change', e => { $('clave').type = e.target.checked ? 'text' : 'password'; });
+$('formIngreso').addEventListener('submit', async e => {
+  e.preventDefault(); $('errorIngreso').textContent = ''; $('btnEntrar').disabled = true;
+  try{ await nube.entrar($('clave').value); if(nube.modoPrueba) mostrarApp(true); }
+  catch(err){ $('errorIngreso').textContent = 'La clave no es correcta. Probá de nuevo.'; }
+  finally{ $('btnEntrar').disabled = false; }
+});
+$('btnSalir').addEventListener('click', async () => { await nube.salir(); if(nube.modoPrueba) mostrarApp(false); });
+
+async function mostrarApp(dentro){
+  $('ingreso').classList.toggle('oculto', dentro);
+  $('app').classList.toggle('oculto', !dentro);
+  if(!dentro){ $('clave').value = ''; if(cancelarEscucha){ cancelarEscucha(); cancelarEscucha = null; } return; }
+  $('avisoPrueba').classList.toggle('oculto', !nube.modoPrueba);
+  try{ diseno = (await nube.leerDiseno()) || H.DISENO; }catch(e){ diseno = H.DISENO; }
+  limpiarForm();
+  cancelarEscucha = await nube.escucharFiscales(lista => { fiscales = lista; dibujarTabla(); });
+}
+nube.alCambiarSesion(mostrarApp);
+
+// ---------- carga ----------
+function limpiarForm(){
+  editando = null; $('formFiscal').reset();
+  $('fLocalidad').value = H.CAMPOS_FIJOS.localidad; $('fProvincia').value = H.CAMPOS_FIJOS.provincia; $('fRol').value = H.CAMPOS_FIJOS.rol;
+  $('tituloForm').textContent = 'Cargá un compañero o compañera';
+  $('btnGuardar').textContent = 'Agregar a la lista'; $('btnCancelar').classList.add('oculto'); $('errorFiscal').textContent = '';
+}
+$('btnCancelar').addEventListener('click', limpiarForm);
+$('fDni').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
+
+$('formFiscal').addEventListener('submit', async e => {
+  e.preventDefault(); $('errorFiscal').textContent = ''; $('okFiscal').textContent = '';
+  const datos = {
+    mesa: $('fMesa').value.trim(), nombre: $('fNombre').value.trim().replace(/\s+/g, ' '), dni: $('fDni').value.trim(),
+    localidad: $('fLocalidad').value.trim(), provincia: $('fProvincia').value.trim(), rol: $('fRol').value.trim()
+  };
+  if(!datos.mesa || !datos.nombre || !datos.dni){ $('errorFiscal').textContent = 'Completá mesa, nombre y DNI.'; return; }
+  if(!/^\d{7,9}$/.test(datos.dni)){ $('errorFiscal').textContent = 'El DNI tiene que tener entre 7 y 9 números, sin puntos.'; return; }
+  const repetido = fiscales.find(f => f.dni === datos.dni && f.id !== editando);
+  if(repetido){ $('errorFiscal').textContent = 'Ese DNI ya está en la lista (' + repetido.nombre + ', mesa ' + repetido.mesa + ').'; return; }
+  $('btnGuardar').disabled = true;
+  try{
+    if(editando){ await nube.editarFiscal(editando, datos); $('okFiscal').textContent = '✓ Cambios guardados'; }
+    else{ await nube.agregarFiscal(datos); $('okFiscal').textContent = '✓ Agregado: ' + datos.nombre; }
+    limpiarForm(); $('fMesa').focus();
+    setTimeout(() => { $('okFiscal').textContent = ''; }, 3000);
+  }catch(err){ $('errorFiscal').textContent = 'No se pudo guardar. Revisá la conexión y probá de nuevo.'; }
+  finally{ $('btnGuardar').disabled = false; }
+});
+
+// ---------- lista ----------
+$('buscar').addEventListener('input', dibujarTabla);
+$('todos').addEventListener('change', e => {
+  visibles().forEach(f => e.target.checked ? elegidos.add(f.id) : elegidos.delete(f.id)); dibujarTabla();
+});
+function visibles(){
+  const q = $('buscar').value.trim().toLowerCase();
+  const l = fiscales.slice().sort((a, b) => (parseInt(a.mesa) || 0) - (parseInt(b.mesa) || 0) || a.nombre.localeCompare(b.nombre));
+  return q ? l.filter(f => (f.nombre + ' ' + f.dni + ' ' + f.mesa).toLowerCase().includes(q)) : l;
+}
+function celda(tr, texto, cls){ const td = document.createElement('td'); td.textContent = texto; if(cls) td.className = cls; tr.appendChild(td); return td; }
+function dibujarTabla(){
+  const ids = new Set(fiscales.map(f => f.id)); elegidos.forEach(id => { if(!ids.has(id)) elegidos.delete(id); });
+  const tb = $('tabla'); tb.textContent = '';
+  const lista = visibles();
+  $('contador').textContent = '(' + fiscales.length + ')';
+  if(!lista.length){
+    const tr = document.createElement('tr'); const td = celda(tr, fiscales.length ? 'No hay resultados para esa búsqueda.' : 'Todavía no cargaste a nadie.', 'vacio'); td.colSpan = 5; tb.appendChild(tr);
+  }
+  lista.forEach(f => {
+    const tr = document.createElement('tr');
+    const tdc = document.createElement('td'); tdc.className = 'chk';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = elegidos.has(f.id);
+    cb.setAttribute('aria-label', 'Elegir a ' + f.nombre);
+    cb.addEventListener('change', () => { cb.checked ? elegidos.add(f.id) : elegidos.delete(f.id); actualizarElegidas(); });
+    tdc.appendChild(cb); tr.appendChild(tdc);
+    celda(tr, f.mesa); celda(tr, f.nombre); celda(tr, f.dni, 'col-dni');
+    const tdb = celda(tr, '', 'botones');
+    const be = document.createElement('button'); be.type = 'button'; be.className = 'boton gris chico'; be.textContent = 'Editar';
+    be.addEventListener('click', () => editar(f));
+    const bb = document.createElement('button'); bb.type = 'button'; bb.className = 'boton gris chico'; bb.textContent = 'Borrar';
+    bb.addEventListener('click', () => pedirBorrar(tdb, f));
+    tdb.append(be, ' ', bb);
+    tb.appendChild(tr);
+  });
+  $('todos').checked = lista.length > 0 && lista.every(f => elegidos.has(f.id));
+  actualizarElegidas();
+}
+function editar(f){
+  editando = f.id;
+  $('fMesa').value = f.mesa; $('fNombre').value = f.nombre; $('fDni').value = f.dni;
+  $('fLocalidad').value = f.localidad || ''; $('fProvincia').value = f.provincia || ''; $('fRol').value = f.rol || '';
+  $('tituloForm').textContent = 'Corregí los datos de ' + f.nombre;
+  $('btnGuardar').textContent = 'Guardar cambios'; $('btnCancelar').classList.remove('oculto');
+  window.scrollTo({ top:0, behavior:'smooth' }); $('fNombre').focus();
+}
+function pedirBorrar(td, f){
+  td.textContent = '';
+  const caja = document.createElement('span'); caja.className = 'confirmar';
+  caja.append('¿Borrar? ');
+  const si = document.createElement('button'); si.type = 'button'; si.className = 'boton chico'; si.textContent = 'Sí, borrar';
+  si.addEventListener('click', async () => { si.disabled = true; try{ await nube.borrarFiscal(f.id); }catch(e){ dibujarTabla(); } });
+  const no = document.createElement('button'); no.type = 'button'; no.className = 'boton gris chico'; no.textContent = 'No';
+  no.addEventListener('click', dibujarTabla);
+  caja.append(si, no); td.appendChild(caja);
+}
+function actualizarElegidas(){
+  const n = elegidos.size;
+  $('btnImprimir').disabled = n === 0;
+  $('btnImprimir').textContent = n ? 'Imprimir ' + n + (n === 1 ? ' constancia' : ' constancias') : 'Imprimir las elegidas';
+  $('elegidas').textContent = n ? '' : 'Marcá en la lista a quiénes querés imprimir.';
+}
+
+// ---------- impresión ----------
+$('btnImprimir').addEventListener('click', async () => {
+  const lista = visibles().filter(f => elegidos.has(f.id));
+  const caja = $('impresion'); caja.textContent = '';
+  lista.forEach(f => caja.appendChild(H.crear(diseno, f)));
+  $('btnImprimir').disabled = true; $('btnImprimir').textContent = 'Preparando…';
+  try{
+    await document.fonts.ready;
+    await Promise.all(Array.from(caja.querySelectorAll('img')).map(i => i.decode().catch(() => {})));
+  }finally{ actualizarElegidas(); }
+  window.print();
+});
+</script>
+</body>
+</html>

@@ -1,4 +1,7 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "hosting": {
     "public": "site/dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
@@ -22,6 +25,13 @@
       {
         "source": "**/*.@(png|jpg|jpeg|webp|avif|svg|ico)",
         "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }]
+      },
+      {
+        "source": "/constancias/**",
+        "headers": [
+          { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+          { "key": "Cache-Control", "value": "no-cache" }
+        ]
       }
     ]
   }

@@ -1,0 +1,29 @@
+/* Hoja A4 del Formulario N°3 (CTA-T) — compartida por la app (index.html) y el
+   ajuste de diseño (ajustar.html). Todo en mm, igual que la impresión. */
+.hoja{ position:relative; width:210mm; height:297mm; background:#fff; overflow:hidden; color:#111;
+  font-family:Arial, "Liberation Sans", Helvetica, sans-serif; }
+
+.hoja .el{ position:absolute; transform-origin:center; z-index:5; }
+.hoja .el img{ display:block; width:100%; pointer-events:none; -webkit-user-drag:none; }
+.hoja .el.oculto{ display:none; }
+/* dato cargado: pieza propia dentro de su línea punteada (la línea queda fija, el texto se mueve/escala) */
+.hoja .pieza{ display:block; width:100%; position:relative; transform-origin:center; min-height:1em; }
+/* textos impresos de cada renglón: cada fragmento es una pieza aparte */
+.hoja .pieza.frag{ display:inline-block; width:auto; margin:0 .4mm; white-space:nowrap; }
+.hoja .pieza.frag.grande{ margin-right:1mm; } .hoja .pieza.frag.anio{ margin-left:1.2mm; margin-right:0; }
+
+.hoja .franja{ width:178mm; height:45mm; background:#1a1a1a; z-index:1; }
+.hoja .fecha{ color:#f2f2f2; font-size:12pt; white-space:nowrap; }
+.hoja .numero{ background:#f2f2f2; color:#222; font-size:13pt; padding:3mm 5mm; white-space:nowrap; }
+.hoja .logo-ctat{ width:80mm; background:#fff; padding:1mm 2mm; }
+.hoja .titulo{ width:178mm; text-align:center; font-size:13pt; font-weight:bold; text-decoration:underline; text-underline-offset:2px; }
+.hoja .renglon{ white-space:nowrap; font-size:11pt; display:flex; align-items:baseline; }
+.hoja .campo{ display:inline-block; border-bottom:1.3px dotted #333; margin:0 1.5mm; padding:0 1mm 1mm; text-align:center;
+  font-size:11.5pt; font-weight:bold; text-transform:uppercase; color:#1b2a6b; min-height:1em; }
+.hoja .dato.manuscrita{ font-weight:normal; text-transform:none; padding-bottom:0; line-height:1; white-space:nowrap; }
+.hoja .dato.manuscrita .ch{ display:inline-block; white-space:pre; }
+.hoja .grande{ font-size:14pt; font-weight:bold; } .hoja .anio{ font-size:15pt; }
+.hoja .texto-firma{ text-align:center; font-size:10pt; font-family:"Times New Roman", "Liberation Serif", serif; }
+.hoja .linea-l6{ width:58mm; height:2mm; border-top:1.3px dotted #333; }
+.hoja .rotulo-l6{ width:58mm; text-align:center; font-weight:bold; font-size:11pt; }
+.hoja .firma{ z-index:7; }

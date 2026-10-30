@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Ajustar diseño · Constancias</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Reenie+Beanie&family=Shadows+Into+Light&family=Indie+Flower&family=Covered+By+Your+Grace&family=Caveat&display=block">
+<link rel="stylesheet" href="hoja.css">
+<style>
+  :root{
+    --paper:#f2efe6; --paper-raised:#fbfaf6; --ink:#1c1a16; --ink-soft:#5c574c;
+    --line:#d8d1bf; --line-strong:#b7ae97;
+    --accent:#0e7490; --crop:#b5432f; --ok:#2f7d4f;
+    --shadow: 0 1px 2px rgba(28,26,22,.06), 0 8px 24px -12px rgba(28,26,22,.18);
+    --radius:3px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#17181a; --paper-raised:#1f2123; --ink:#ece7da; --ink-soft:#a39d8c;
+      --line:#33352f; --line-strong:#4a4c43; --accent:#2fb8cf; --crop:#d9836c; --ok:#59b781;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    }
+  }
+  * { box-sizing:border-box; }
+  html,body{ margin:0; background:var(--paper); color:var(--ink); }
+  body{ font-family:system-ui, Arial, sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+  .oculto{ display:none !important; }
+
+  header{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; padding:14px 22px 12px; border-bottom:1px solid var(--line); }
+  header h1{ font-size:20px; font-weight:600; margin:0; }
+  header .subt{ font-size:12.5px; color:var(--ink-soft); margin:0; flex:1; }
+  header a{ color:var(--accent); font-size:14px; }
+
+  main{ flex:1; display:flex; min-height:0; }
+  .rail{ width:300px; flex:none; border-right:1px solid var(--line); padding:14px 16px 24px; overflow-y:auto;
+    display:flex; flex-direction:column; gap:18px; max-height:calc(100vh - 50px); }
+  .grp{ display:flex; flex-direction:column; gap:8px; }
+  .grp-h{ display:flex; align-items:center; gap:7px; font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:var(--ink-soft); }
+  .grp-h .dot{ width:7px; height:7px; border-radius:50%; background:var(--dot,var(--accent)); }
+  .grp.ref .grp-h .dot{ --dot:var(--crop); }
+  .row{ display:flex; align-items:center; gap:8px; }
+  .row label{ font-size:12px; color:var(--ink-soft); width:62px; flex:none; }
+  .row input[type=range]{ flex:1; accent-color:var(--accent); }
+  .grp.ref .row input[type=range]{ accent-color:var(--crop); }
+  .row input[type=text], .row select{ flex:1; min-width:0; font:inherit; font-size:12.5px; padding:5px 7px;
+    border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--paper-raised); color:var(--ink); }
+  .row .val{ font-family:ui-monospace, monospace; font-size:11.5px; width:44px; text-align:right; flex:none; }
+  .chk{ display:flex; align-items:center; gap:7px; font-size:12px; }
+  button.btn{ font:inherit; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--line-strong);
+    background:var(--paper-raised); color:var(--ink); border-radius:var(--radius); padding:7px 10px; }
+  button.btn:hover{ border-color:var(--accent); }
+  button.btn.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btnrow{ display:flex; gap:8px; } .btnrow button{ flex:1; }
+  .hint{ font-size:11px; line-height:1.5; color:var(--ink-soft); }
+  pre#out{ font-family:ui-monospace, monospace; font-size:10.5px; line-height:1.45; background:var(--paper-raised);
+    border:1px solid var(--line); border-radius:var(--radius); padding:8px; white-space:pre-wrap; margin:0; max-height:170px; overflow:auto; }
+  .msg{ color:var(--ok); font-size:12px; min-height:16px; font-weight:600; }
+  .msg.err{ color:var(--crop); }
+
+  .stagewrap{ flex:1; min-width:0; overflow:auto; padding:30px; display:flex; justify-content:center; align-items:flex-start;
+    max-height:calc(100vh - 50px);
+    background: linear-gradient(var(--line) 1px, transparent 1px) 0 0/100% 24px,
+                linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/24px 100%; background-color:var(--paper); }
+  .zoomshell{ position:relative; transform-origin:top center; }
+  .stage{ box-shadow:var(--shadow); outline:1px solid var(--line-strong); touch-action:none; }
+  .stage .el, .stage .pieza{ cursor:grab; touch-action:none; }
+  .stage .el:active, .stage .pieza:active{ cursor:grabbing; }
+  .stage .sel{ outline:1.5px dashed var(--crop); outline-offset:2px; }
+
+  #refLayer{ position:absolute; left:0; top:0; z-index:20; transform-origin:0 0; pointer-events:none; user-select:none; }
+  #refLayer.movable{ pointer-events:auto; cursor:move; }
+  #refLayer img{ display:block; width:219.5mm; margin:-23.2mm 0 0 -4.9mm; pointer-events:none; -webkit-user-drag:none; }
+
+  @page{ size:A4; margin:0; }
+  @media print{
+    html,body{ background:#fff; }
+    header, .rail{ display:none !important; }
+    main, .stagewrap{ display:block; padding:0; max-height:none; overflow:visible; background:none; }
+    .zoomshell{ transform:none !important; }
+    .stage{ box-shadow:none; outline:none; }
+    #refLayer{ display:none; }
+    .stage .sel{ outline:none; }
+  }
+  @media (max-width:860px){ main{ flex-direction:column; } .rail{ width:auto; border-right:0; max-height:46vh; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Ajustar diseño</h1>
+  <p class="subt">Formulario N°3 · acomodá cada pieza contra la foto original. Opcional: si no tocás nada, se usa el diseño actual.</p>
+  <a href="./">← Volver a la lista</a>
+</header>
+
+<main>
+  <div class="rail">
+    <div class="grp">
+      <div class="grp-h">Guardar</div>
+      <button class="btn primary" id="btnGuardar">Guardar diseño para todos</button>
+      <div class="btnrow"><button class="btn" id="btnDeshacer">Descartar cambios</button><button class="btn" id="btnOriginal">Volver al original</button></div>
+      <div class="msg" id="msg"></div>
+      <div class="hint">Lo que guardes acá se usa en todas las impresiones, de cualquier compu.</div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">Datos de ejemplo</div>
+      <div class="row"><label>Mesa N°</label><input type="text" data-f="mesa" value="12"></div>
+      <div class="row"><label>Cro./A</label><input type="text" data-f="nombre" value="Juana Pérez"></div>
+      <div class="row"><label>D.N.I.</label><input type="text" data-f="dni" value="12345678"></div>
+      <div class="row"><label>Letra</label>
+        <select id="fuente">
+          <option value="Reenie Beanie">Manuscrita 1 · Reenie Beanie</option>
+          <option value="Shadows Into Light">Manuscrita 2 · Shadows Into Light</option>
+          <option value="Indie Flower">Manuscrita 3 · Indie Flower</option>
+          <option value="Covered By Your Grace">Manuscrita 4 · Covered By Your Grace</option>
+          <option value="Caveat">Manuscrita 5 · Caveat</option>
+          <option value="imprenta">Imprenta (Arial)</option>
+        </select></div>
+      <div class="row"><label>Tamaño</label><input type="range" id="fSize" min="10" max="26" value="20"><span class="val" id="fSizeVal">20pt</span></div>
+      <div class="row"><label>Color</label>
+        <select id="fColor"><option value="#1d3a8a">Birome azul</option><option value="#1a1a1a">Birome negra</option></select></div>
+      <label class="chk"><input type="checkbox" id="fIrreg" checked> Trazo irregular (cada letra apenas torcida)</label>
+      <div class="hint">Los datos de ejemplo no se guardan: solo sirven para ver cómo queda.</div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h"><span class="dot"></span>Ajustar</div>
+      <div class="hint" id="selLabel">Hacé clic en cualquier pieza de la hoja.</div>
+      <div class="row"><label>Escala</label><input type="range" id="tScale" min="30" max="260" value="100"><span class="val" id="tScaleVal">100%</span></div>
+      <div class="row"><label>Giro</label><input type="range" id="tRot" min="-45" max="45" value="0"><span class="val" id="tRotVal">0°</span></div>
+      <div class="hint">Arrastrá para mover · rueda = escala · Shift + rueda = giro · flechas = 0,5 mm (Shift = 2 mm). Cada texto y cada dato se mueve solo; <b>Alt + clic</b> agarra el renglón entero.</div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h"><span class="dot"></span>Firmas y sellos</div>
+      <label class="chk"><input type="checkbox" data-vis="firmaCappussi"> Firma Cappussi (Delegada Electoral)</label>
+      <label class="chk"><input type="checkbox" data-vis="logoProv"> Logo CTA provincial (La Plata)</label>
+      <label class="chk"><input type="checkbox" data-vis="firmaL6"> Firma apoderado Lista 6</label>
+      <div class="row"><label>Tinta</label>
+        <div class="btnrow" id="tintaSeg" style="flex:1"><button class="btn" data-tinta="negro">Negro</button><button class="btn" data-tinta="azul">Azul</button></div>
+      </div>
+      <div class="hint">Apoderado de Lista 10 y Sub Delegada firman a mano en cada formulario: se ven en la foto de referencia para dejarles el espacio.</div>
+    </div>
+
+    <div class="grp ref">
+      <div class="grp-h"><span class="dot"></span>Foto original (referencia)</div>
+      <div class="row"><label>Opacidad</label><input type="range" id="rOpacity" min="0" max="100" value="40"><span class="val" id="rOpacityVal">40%</span></div>
+      <div class="row"><label>Escala</label><input type="range" id="rScale" min="50" max="200" value="95"><span class="val" id="rScaleVal">95%</span></div>
+      <div class="btnrow"><button class="btn" id="rReset">Centrar</button><button class="btn" id="rMove">🔒 Bloqueada</button></div>
+      <div class="hint">La foto tiene perspectiva: usala para orientarte. No sale impresa.</div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">Vista</div>
+      <div class="row"><label>Zoom</label><input type="range" id="zoom" min="40" max="150" value="80"><span class="val" id="zoomVal">80%</span></div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">Avanzado</div>
+      <button class="btn" id="printBtn">Imprimir esta hoja de prueba</button>
+      <pre id="out"></pre>
+      <button class="btn" id="copyBtn">Copiar configuración</button>
+    </div>
+  </div>
+
+  <div class="stagewrap">
+    <div class="zoomshell" id="zoomshell">
+      <div class="hoja stage" id="stage">
+        <div id="refLayer"><img src="assets/referencia.jpg" alt="Foto original"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="hoja.js"></script>
+<script type="module">
+import * as nube from './nube.js';
+const H = window.Hoja;
+const $ = id => document.getElementById(id);
+const stage = $('stage');
+stage.insertAdjacentHTML('beforeend', H.HTML);
+
+const els = {};
+stage.querySelectorAll('.el, .pieza').forEach(el => { els[el.dataset.ck] = el; });
+const KEYS = Object.keys(els);
+const LABELS = {
+  franja:'Franja negra', fecha:'"ELECCIONES 3 DE NOVIEMBRE…"', numero:'"FORMULARIO N°3"', logoCtaT:'Logo CTA-T (cabecera)',
+  titulo:'Título', renglon1:'Renglón 1: localidad / provincia', renglon2:'Renglón 2: fecha / designa como', renglon3:'Renglón 3: mesa / nombre / DNI',
+  firmaCappussi:'Firma Cappussi', aclaCappussi:'Aclaración "Cappussi Luciana"', cargoDelegada:'Cargo "Delegada Electoral CTA-T…"',
+  logoProv:'Logo CTA provincial', firmaL6:'Firma apoderado Lista 6', lineaL6:'Línea punteada Lista 6', rotuloL6:'Rótulo "APODERADO DE LISTA 6"',
+  datoLocalidad:'Dato: localidad', datoProvincia:'Dato: provincia', datoRol:'Dato: designa como',
+  datoMesa:'Dato: mesa N°', datoNombre:'Dato: Cro./A', datoDni:'Dato: D.N.I.',
+  txtLocalidad:'Texto: "En la localidad de"', txtProvincia:'Texto: "provincia de"', txtALos:'Texto: "a los"',
+  txtDia:'Texto: "3"', txtMes:'Texto: "días del mes de noviembre"', txtAnio:'Texto: "de 2026"', txtDesigna:'Texto: ", se designa como"', txtDeLa:'Texto: "De la"',
+  txtMesa:'Texto: "mesa N°"', txtCro:'Texto: "al Cro./A"', txtDni:'Texto: "D.N.I."'
+};
+const REF0 = { dx:-3.8, dy:-14, scale:95, opacity:40 };
+const r1 = n => Math.round(n * 10) / 10;
+
+let state, guardado = '', target = null;
+function desdeDiseno(d){
+  return { comp:H.deltas(stage, d), vis:Object.assign({ firmaCappussi:true, logoProv:true, firmaL6:true }, d.visibles),
+    tinta:d.tinta || 'negro', letra:Object.assign({}, H.DISENO.letra, d.letra),
+    ref:state ? state.ref : Object.assign({}, REF0),
+    campos:Object.assign({}, H.CAMPOS_FIJOS, state ? state.campos : { mesa:'12', nombre:'Juana Pérez', dni:'12345678' }) };
+}
+function aDiseno(){
+  const componentes = {};
+  KEYS.forEach(k => {
+    const c = state.comp[k];
+    if(c.dx || c.dy || c.scale !== 100 || c.rot)
+      componentes[k] = els[k].dataset.x
+        ? { posicion_mm:{ x:r1(+els[k].dataset.x + c.dx), y:r1(+els[k].dataset.y + c.dy) }, escala_pct:c.scale, giro_grados:c.rot }
+        : { desplazamiento_mm:{ x:r1(c.dx), y:r1(c.dy) }, escala_pct:c.scale, giro_grados:c.rot };
+  });
+  return { formulario:'CTA N°3 — Designación de Fiscal de Mesa', tinta:state.tinta, letra:state.letra, visibles:state.vis, componentes };
+}
+function renderOut(){
+  const txt = JSON.stringify(aDiseno(), null, 2);
+  $('out').textContent = txt;
+  const sucio = txt !== guardado;
+  $('btnGuardar').textContent = sucio ? 'Guardar diseño para todos •' : 'Guardar diseño para todos';
+}
+const save = renderOut;
+window.addEventListener('beforeunload', e => { if(state && $('out').textContent !== guardado){ e.preventDefault(); e.returnValue = ''; } });
+
+function applyEl(k){ H.aplicarPieza(els[k], state.comp[k], state.vis); }
+function applyAll(){ KEYS.forEach(applyEl); applyRef(); applyCampos(); applyTinta(); syncUI(); }
+function applyCampos(){ H.aplicarCampos(stage, state.campos, state.letra); }
+function applyTinta(){
+  H.aplicarTinta(stage, state.tinta);
+  document.querySelectorAll('#tintaSeg button').forEach(b => b.classList.toggle('primary', b.dataset.tinta === state.tinta));
+}
+function syncUI(){
+  const L = state.letra;
+  $('fuente').value = L.fuente; $('fSize').value = L.size; $('fSizeVal').textContent = L.size + 'pt';
+  $('fColor').value = L.color; $('fIrreg').checked = L.irreg;
+  document.querySelectorAll('[data-vis]').forEach(cb => { cb.checked = state.vis[cb.dataset.vis]; });
+  document.querySelectorAll('[data-f]').forEach(i => { i.value = state.campos[i.dataset.f] || ''; });
+}
+
+// ---------- tinta / visibilidad / letra / datos ----------
+$('tintaSeg').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; state.tinta = b.dataset.tinta; applyTinta(); save(); });
+document.querySelectorAll('[data-vis]').forEach(cb => cb.addEventListener('change', () => { state.vis[cb.dataset.vis] = cb.checked; applyEl(cb.dataset.vis); save(); }));
+$('fuente').addEventListener('change', e => { state.letra.fuente = e.target.value; applyCampos(); save(); });
+$('fSize').addEventListener('input', e => { state.letra.size = +e.target.value; $('fSizeVal').textContent = e.target.value + 'pt'; applyCampos(); save(); });
+$('fColor').addEventListener('change', e => { state.letra.color = e.target.value; applyCampos(); save(); });
+$('fIrreg').addEventListener('change', e => { state.letra.irreg = e.target.checked; applyCampos(); save(); });
+document.querySelectorAll('[data-f]').forEach(inp => inp.addEventListener('input', () => { state.campos[inp.dataset.f] = inp.value; applyCampos(); }));
+
+// ---------- selección + sliders ----------
+function select(k){
+  target = k;
+  KEYS.forEach(x => els[x].classList.toggle('sel', x === k));
+  $('selLabel').textContent = 'Seleccionado: ' + (LABELS[k] || k);
+  const c = state.comp[k];
+  $('tScale').value = c.scale; $('tScaleVal').textContent = c.scale + '%';
+  $('tRot').value = c.rot; $('tRotVal').textContent = c.rot + '°';
+}
+$('tScale').addEventListener('input', e => { if(!target) return; state.comp[target].scale = +e.target.value; $('tScaleVal').textContent = e.target.value + '%'; applyEl(target); save(); });
+$('tRot').addEventListener('input', e => { if(!target) return; state.comp[target].rot = +e.target.value; $('tRotVal').textContent = e.target.value + '°'; applyEl(target); save(); });
+
+// mm por px de pantalla: se mide en vivo contra el ancho real (ya incluye el zoom)
+const mmPerPx = () => 210 / stage.getBoundingClientRect().width;
+KEYS.forEach(k => {
+  const el = els[k]; let dragging = false, sx, sy, base;
+  el.addEventListener('pointerdown', e => {
+    // Alt + clic sobre una pieza interna = agarrar el renglón entero (el evento sigue hasta el padre)
+    if(e.altKey && el.classList.contains('pieza')) return;
+    e.stopPropagation(); // una pieza adentro de un renglón no tiene que arrastrar también el renglón
+    select(k); dragging = true; el.setPointerCapture(e.pointerId);
+    sx = e.clientX; sy = e.clientY; base = { dx:state.comp[k].dx, dy:state.comp[k].dy }; e.preventDefault();
+  });
+  el.addEventListener('pointermove', e => {
+    if(!dragging) return; const f = mmPerPx();
+    state.comp[k].dx = r1(base.dx + (e.clientX - sx) * f); state.comp[k].dy = r1(base.dy + (e.clientY - sy) * f); applyEl(k);
+  });
+  const end = () => { if(!dragging) return; dragging = false; save(); };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  el.addEventListener('wheel', e => {
+    if(e.altKey && el.classList.contains('pieza')) return;
+    e.preventDefault(); e.stopPropagation(); const c = state.comp[k];
+    if(e.shiftKey) c.rot = Math.max(-45, Math.min(45, c.rot + (e.deltaY < 0 ? 1 : -1)));
+    else c.scale = Math.max(30, Math.min(260, c.scale + (e.deltaY < 0 ? 2 : -2)));
+    select(k); applyEl(k); save();
+  }, { passive:false });
+});
+document.addEventListener('keydown', e => {
+  if(!target || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  const step = e.shiftKey ? 2 : 0.5, c = state.comp[target];
+  const d = { ArrowLeft:[-step,0], ArrowRight:[step,0], ArrowUp:[0,-step], ArrowDown:[0,step] }[e.key];
+  if(!d) return; e.preventDefault();
+  c.dx = r1(c.dx + d[0]); c.dy = r1(c.dy + d[1]); applyEl(target); save();
+});
+
+// ---------- foto de referencia ----------
+const refLayer = $('refLayer');
+function applyRef(){
+  const r = state.ref;
+  refLayer.style.opacity = r.opacity / 100;
+  refLayer.style.transform = 'translate(' + r.dx + 'mm,' + r.dy + 'mm) scale(' + (r.scale / 100) + ')';
+  $('rOpacity').value = r.opacity; $('rOpacityVal').textContent = r.opacity + '%';
+  $('rScale').value = r.scale; $('rScaleVal').textContent = r.scale + '%';
+}
+$('rOpacity').addEventListener('input', e => { state.ref.opacity = +e.target.value; applyRef(); });
+$('rScale').addEventListener('input', e => { state.ref.scale = +e.target.value; applyRef(); });
+$('rReset').addEventListener('click', () => { Object.assign(state.ref, { dx:REF0.dx, dy:REF0.dy, scale:REF0.scale }); applyRef(); });
+let refMovable = false;
+$('rMove').addEventListener('click', () => {
+  refMovable = !refMovable; refLayer.classList.toggle('movable', refMovable);
+  $('rMove').textContent = refMovable ? '🔓 Moviendo' : '🔒 Bloqueada'; $('rMove').classList.toggle('primary', refMovable);
+});
+(() => {
+  let dragging = false, sx, sy, base;
+  refLayer.addEventListener('pointerdown', e => { dragging = true; refLayer.setPointerCapture(e.pointerId); sx = e.clientX; sy = e.clientY; base = { dx:state.ref.dx, dy:state.ref.dy }; e.preventDefault(); });
+  refLayer.addEventListener('pointermove', e => { if(!dragging) return; const f = mmPerPx(); state.ref.dx = r1(base.dx + (e.clientX - sx) * f); state.ref.dy = r1(base.dy + (e.clientY - sy) * f); applyRef(); });
+  const end = () => { dragging = false; };
+  refLayer.addEventListener('pointerup', end); refLayer.addEventListener('pointercancel', end);
+})();
+
+// ---------- zoom ----------
+function applyZoom(v){
+  $('zoomshell').style.transform = 'scale(' + (v / 100) + ')';
+  $('zoomshell').style.marginBottom = 'calc(297mm * ' + (v / 100 - 1) + ')';
+  $('zoomVal').textContent = v + '%';
+}
+$('zoom').addEventListener('input', e => applyZoom(+e.target.value));
+
+// ---------- guardar / descartar / exportar ----------
+function aviso(t, err){ $('msg').textContent = t; $('msg').classList.toggle('err', !!err); if(!err) setTimeout(() => { if($('msg').textContent === t) $('msg').textContent = ''; }, 3000); }
+$('btnGuardar').addEventListener('click', async () => {
+  $('btnGuardar').disabled = true;
+  try{ const d = aDiseno(); await nube.guardarDiseno(d); guardado = JSON.stringify(d, null, 2); renderOut(); aviso('✓ Diseño guardado para todos'); }
+  catch(e){ aviso('No se pudo guardar. Revisá la conexión.', true); }
+  finally{ $('btnGuardar').disabled = false; }
+});
+$('btnDeshacer').addEventListener('click', async () => { await cargar(); aviso('Cambios descartados'); });
+$('btnOriginal').addEventListener('click', () => { state = desdeDiseno(H.DISENO); applyAll(); renderOut(); aviso('Diseño original cargado: guardalo si querés usarlo'); });
+$('copyBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText($('out').textContent).then(() => aviso('✓ Copiado'), () => aviso('Copialo a mano del recuadro', true));
+});
+$('printBtn').addEventListener('click', () => { KEYS.forEach(x => els[x].classList.remove('sel')); target = null; window.print(); });
+
+async function cargar(){
+  let d = null;
+  try{ d = await nube.leerDiseno(); }catch(e){}
+  state = desdeDiseno(d || H.DISENO);
+  guardado = JSON.stringify(aDiseno(), null, 2);
+  applyAll(); renderOut();
+}
+
+// solo con sesión iniciada (la clave se pide en la página principal)
+nube.alCambiarSesion(async dentro => {
+  if(!dentro){ location.replace('./'); return; }
+  if(!state){ await cargar(); applyZoom(80); }
+});
+</script>
+</body>
+</html>
