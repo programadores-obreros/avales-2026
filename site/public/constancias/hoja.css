@@ -1,7 +1,10 @@
 /* Hoja A4 del Formulario N°3 (CTA-T) — compartida por la app (index.html) y el
    ajuste de diseño (ajustar.html). Todo en mm, igual que la impresión. */
 .hoja{ position:relative; width:210mm; height:297mm; background:#fff; overflow:hidden; color:#111;
-  font-family:Arial, "Liberation Sans", Helvetica, sans-serif; }
+  font-family:Arial, "Liberation Sans", Helvetica, sans-serif;
+  /* sin esto el navegador no imprime la franja negra ni el recuadro del N°3 (fondos) salvo que
+     se tilde "Gráficos de fondo" en el diálogo de impresión */
+  -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 
 .hoja .el{ position:absolute; transform-origin:center; z-index:5; }
 .hoja .el img{ display:block; width:100%; pointer-events:none; -webkit-user-drag:none; }
