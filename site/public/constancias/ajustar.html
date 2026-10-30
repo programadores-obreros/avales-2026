@@ -136,10 +136,12 @@
       <label class="chk"><input type="checkbox" data-vis="firmaCappussi"> Firma Cappussi (Delegada Electoral)</label>
       <label class="chk"><input type="checkbox" data-vis="logoProv"> Logo CTA provincial (La Plata)</label>
       <label class="chk"><input type="checkbox" data-vis="firmaL6"> Firma apoderado Lista 6</label>
+      <label class="chk"><input type="checkbox" data-vis="firmaL10"> Firma apoderado Lista 10</label>
+      <label class="chk"><input type="checkbox" data-vis="firmaOrrego"> Firma Sub Delegada (Orrego)</label>
       <div class="row"><label>Tinta</label>
         <div class="btnrow" id="tintaSeg" style="flex:1"><button class="btn" data-tinta="negro">Negro</button><button class="btn" data-tinta="azul">Azul</button></div>
       </div>
-      <div class="hint">Apoderado de Lista 10 y Sub Delegada firman a mano en cada formulario: se ven en la foto de referencia para dejarles el espacio.</div>
+      <div class="hint">Las cuatro firmas se imprimen. Desmarcá las que quieras dejar en blanco para firmar a mano.</div>
     </div>
 
     <div class="grp ref">
@@ -188,6 +190,7 @@ const LABELS = {
   titulo:'Título', renglon1:'Renglón 1: localidad / provincia', renglon2:'Renglón 2: fecha / designa como', renglon3:'Renglón 3: mesa / nombre / DNI',
   firmaCappussi:'Firma Cappussi', aclaCappussi:'Aclaración "Cappussi Luciana"', cargoDelegada:'Cargo "Delegada Electoral CTA-T…"',
   logoProv:'Logo CTA provincial', firmaL6:'Firma apoderado Lista 6', lineaL6:'Línea punteada Lista 6', rotuloL6:'Rótulo "APODERADO DE LISTA 6"',
+  firmaL10:'Firma apoderado Lista 10', aclaL10:'Aclaración Lista 10', firmaOrrego:'Firma Sub Delegada', aclaOrrego:'Aclaración Sub Delegada',
   datoLocalidad:'Dato: localidad', datoProvincia:'Dato: provincia', datoRol:'Dato: designa como',
   datoMesa:'Dato: mesa N°', datoNombre:'Dato: Cro./A', datoDni:'Dato: D.N.I.',
   txtLocalidad:'Texto: "En la localidad de"', txtProvincia:'Texto: "provincia de"', txtALos:'Texto: "a los"',
@@ -199,7 +202,7 @@ const r1 = n => Math.round(n * 10) / 10;
 
 let state, guardado = '', target = null;
 function desdeDiseno(d){
-  return { comp:H.deltas(stage, d), vis:Object.assign({ firmaCappussi:true, logoProv:true, firmaL6:true }, d.visibles),
+  return { comp:H.deltas(stage, d), vis:Object.assign({ firmaCappussi:true, logoProv:true, firmaL6:true, firmaL10:true, aclaL10:true, firmaOrrego:true, aclaOrrego:true }, d.visibles),
     tinta:d.tinta || 'negro', letra:Object.assign({}, H.DISENO.letra, d.letra),
     ref:state ? state.ref : Object.assign({}, REF0),
     campos:Object.assign({}, H.CAMPOS_FIJOS, state ? state.campos : { mesa:'12', nombre:'Juana Pérez', dni:'12345678' }) };

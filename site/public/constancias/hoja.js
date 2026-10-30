@@ -4,8 +4,8 @@
    El "diseño" tiene el mismo formato que exporta "Copiar configuración":
    { tinta, letra, visibles, componentes:{ <pieza>: { posicion_mm | desplazamiento_mm, escala_pct, giro_grados } } }
    Las piezas con posición base (data-x/data-y) guardan posicion_mm absoluta; las piezas internas de
-   un renglón guardan desplazamiento_mm. Las firmas de Lista 10 y de la Sub Delegada no forman parte
-   de la hoja: se firman a mano en cada formulario. */
+   un renglón guardan desplazamiento_mm. Las cuatro firmas (Cappussi, Lista 6, Lista 10 y Sub Delegada)
+   forman parte de la hoja y se imprimen; se pueden ocultar desde "Ajustar diseño". */
 (function(){
   "use strict";
 
@@ -30,7 +30,11 @@
     '<div class="el" data-ck="logoProv" data-x="80" data-y="230" style="width:50mm"><img src="assets/logo-cta-provincial.png" alt="CTA de los Trabajadores Provincia de Buenos Aires"></div>',
     '<div class="el firma" data-ck="firmaL6" data-x="140" data-y="186" style="width:48mm"><img data-firma="firma-apoderado-l6" alt="Firma apoderado Lista 6"></div>',
     '<div class="el linea-l6" data-ck="lineaL6" data-x="136" data-y="214"></div>',
-    '<div class="el rotulo-l6" data-ck="rotuloL6" data-x="136" data-y="216">APODERADO DE LISTA 6</div>'
+    '<div class="el rotulo-l6" data-ck="rotuloL6" data-x="136" data-y="216">APODERADO DE LISTA 6</div>',
+    '<div class="el firma" data-ck="firmaL10" data-x="28" data-y="170" style="width:38.3mm"><img data-firma="firma-lista10" alt="Firma apoderado Lista 10"></div>',
+    '<div class="el firma" data-ck="aclaL10" data-x="42" data-y="185" style="width:26.1mm"><img data-firma="acla-lista10" alt="Aclaración Lista 10"></div>',
+    '<div class="el firma" data-ck="firmaOrrego" data-x="13" data-y="217" style="width:40.3mm"><img data-firma="firma-orrego" alt="Firma Sub Delegada"></div>',
+    '<div class="el firma" data-ck="aclaOrrego" data-x="19" data-y="230" style="width:36.4mm"><img data-firma="acla-orrego" alt="Aclaración Sub Delegada"></div>'
   ].join('\n');
 
   // Calibración hecha en la Mesa de Registro (30/10/2026). Es el diseño por defecto hasta que alguien
@@ -38,7 +42,7 @@
   var DISENO = {
     tinta:'negro',
     letra:{ fuente:'Reenie Beanie', size:20, color:'#1d3a8a', irreg:true },
-    visibles:{ firmaCappussi:true, logoProv:true, firmaL6:true },
+    visibles:{ firmaCappussi:true, logoProv:true, firmaL6:true, firmaL10:true, aclaL10:true, firmaOrrego:true, aclaOrrego:true },
     componentes:{
       franja:{ posicion_mm:{ x:16, y:19.7 }, escala_pct:100, giro_grados:0 },
       fecha:{ posicion_mm:{ x:22.7, y:23.7 }, escala_pct:100, giro_grados:0 },
@@ -55,7 +59,11 @@
       logoProv:{ posicion_mm:{ x:78.7, y:235.6 }, escala_pct:109, giro_grados:0 },
       firmaL6:{ posicion_mm:{ x:137.7, y:174.1 }, escala_pct:100, giro_grados:0 },
       lineaL6:{ posicion_mm:{ x:136, y:204.1 }, escala_pct:100, giro_grados:0 },
-      rotuloL6:{ posicion_mm:{ x:136.7, y:212.4 }, escala_pct:100, giro_grados:0 }
+      rotuloL6:{ posicion_mm:{ x:136.7, y:212.4 }, escala_pct:100, giro_grados:0 },
+      firmaL10:{ posicion_mm:{ x:20.3, y:174 }, escala_pct:105, giro_grados:0 },
+      aclaL10:{ posicion_mm:{ x:29.5, y:196.8 }, escala_pct:100, giro_grados:0 },
+      firmaOrrego:{ posicion_mm:{ x:19, y:230.6 }, escala_pct:100, giro_grados:0 },
+      aclaOrrego:{ posicion_mm:{ x:25, y:244.2 }, escala_pct:100, giro_grados:0 }
     }
   };
 
