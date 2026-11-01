@@ -178,7 +178,7 @@
           <input type="number" id="fCantBlanco" value="1" min="1" max="100" inputmode="numeric" aria-label="Cantidad de hojas en blanco">
         </label>
       </div>
-      <p class="ayuda oculto" id="blancoAyuda">Para quien no está en el padrón (se sumó después, o lo designa la junta): salen <b>sin nombre, DNI, mesa ni "se designa como"</b>, para completar a mano. Las firmas salen impresas igual; el sello rojo va después.</p>
+      <p class="ayuda oculto" id="blancoAyuda">Para quien no está en el padrón (se sumó después, o lo designa la junta): salen <b>sin ningún dato</b> (localidad, provincia, "se designa como", mesa, nombre y DNI), para completar a mano. Las firmas salen impresas igual; el sello rojo va después.</p>
       <p class="ayuda">Después de imprimir, falta el sello rojo y las firmas a mano antes de entregarlas.</p>
     </section>
 
@@ -379,9 +379,9 @@ function fichasAEmitir(){
 }
 function crearHoja(f){
   if(!f.blanco) return H.crearModelo(tipoDe(f), disenos[tipoDe(f)], f);
-  const M = H.modelo(f.tipo);
-  // solo quedan impresas la localidad y la provincia; el resto se completa a mano
-  return H.crearModelo(f.tipo, disenos[f.tipo], { localidad:M.campos.localidad, provincia:M.campos.provincia });
+  // hoja en blanco: ningún dato impreso (localidad, provincia, rol, mesa, nombre y DNI
+  // se completan a mano). Las firmas, los logos y la fecha de la elección van impresos.
+  return H.crearModelo(f.tipo, disenos[f.tipo], {});
 }
 $('chkBlanco').addEventListener('change', () => {
   const on = $('chkBlanco').checked;
