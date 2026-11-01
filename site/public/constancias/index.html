@@ -29,6 +29,7 @@
   .boton:hover{ background:var(--rojo-osc); }
   .boton.gris{ background:#eee; color:var(--tinta); } .boton.gris:hover{ background:#e2e2e2; }
   .boton.verde{ background:var(--verde); } .boton.verde:hover{ background:#1B5E20; }
+  .boton.wapp{ background:#25D366; color:#0b3d20; } .boton.wapp:hover{ background:#1fb457; }
   .boton.chico{ padding:8px 12px; font-size:15px; }
   .boton:disabled{ opacity:.5; cursor:not-allowed; }
   .error{ color:var(--rojo); font-weight:600; min-height:1.4em; margin-top:10px; }
@@ -154,12 +155,14 @@
     </section>
 
     <section class="paso">
-      <h2><span class="num">3</span> Imprimí</h2>
+      <h2><span class="num">3</span> Imprimí o enviá</h2>
       <div class="imprimir-caja">
         <button class="boton verde" type="button" id="btnImprimir" disabled>Imprimir las elegidas</button>
+        <button class="boton wapp" type="button" id="btnWhatsapp" disabled>Enviar por WhatsApp</button>
         <span id="elegidas" style="color:var(--suave)"></span>
       </div>
       <p class="ayuda">Sale una hoja A4 por cada compañero o compañera. En la ventana que se abre podés elegir tu impresora o <b>"Guardar como PDF"</b>. Si aparecen márgenes o encabezados, desactivalos en "Más opciones".</p>
+      <p class="ayuda">Con <b>Enviar por WhatsApp</b> se arma un PDF con todas las elegidas (una hoja por página) y se abre WhatsApp para elegir a quién mandárselo. Si tu navegador no lo permite, se descarga el PDF y se abre WhatsApp Web para adjuntarlo.</p>
       <p class="ayuda">Después de imprimir, falta el sello rojo y las firmas a mano antes de entregarlas.</p>
     </section>
 
@@ -340,11 +343,27 @@ function pedirBorrar(td, f){
   no.addEventListener('click', dibujarTabla);
   caja.append(si, no); td.appendChild(caja);
 }
+// mientras se arma un PDF o una impresión no se toca el estado de los botones
+let ocupado = false;
 function actualizarElegidas(){
   const n = elegidos.size;
+  if(ocupado) return;
   $('btnImprimir').disabled = n === 0;
   $('btnImprimir').textContent = n ? 'Imprimir ' + n + (n === 1 ? ' constancia' : ' constancias') : 'Imprimir las elegidas';
-  $('elegidas').textContent = n ? '' : 'Marcá en la lista a quiénes querés imprimir.';
+  $('btnWhatsapp').disabled = n === 0;
+  $('elegidas').textContent = n ? '' : 'Marcá en la lista a quiénes querés imprimir o enviar.';
+}
+
+// document.fonts.ready y el decode de las imágenes pueden quedarse colgados (fuente que no carga,
+// imagen trabada). No queremos que el PDF o la impresión queden esperando para siempre.
+const conLimite = (promesa, ms) => new Promise(resolver => {
+  const reloj = setTimeout(resolver, ms);
+  const listo = () => { clearTimeout(reloj); resolver(); };
+  promesa.then(listo, listo);
+});
+async function listoParaDibujar(caja){
+  await conLimite(document.fonts.ready, 2500);
+  await conLimite(Promise.all(Array.from(caja.querySelectorAll('img')).map(i => i.decode().catch(() => {}))), 5000);
 }
 
 // ---------- impresión ----------
@@ -352,13 +371,108 @@ $('btnImprimir').addEventListener('click', async () => {
   const lista = visibles().filter(f => elegidos.has(f.id));
   const caja = $('impresion'); caja.textContent = '';
   lista.forEach(f => caja.appendChild(H.crearModelo(tipoDe(f), disenos[tipoDe(f)], f)));
-  $('btnImprimir').disabled = true; $('btnImprimir').textContent = 'Preparando…';
-  try{
-    await document.fonts.ready;
-    await Promise.all(Array.from(caja.querySelectorAll('img')).map(i => i.decode().catch(() => {})));
-  }finally{ actualizarElegidas(); }
+  ocupado = true; $('btnImprimir').disabled = true; $('btnWhatsapp').disabled = true;
+  $('btnImprimir').textContent = 'Preparando…';
+  try{ await listoParaDibujar(caja); }
+  finally{ ocupado = false; actualizarElegidas(); }
   window.print();
 });
+
+// ---------- enviar por WhatsApp ----------
+// El PDF se arma en el propio navegador (html2canvas + jsPDF): no hay servidor de por medio.
+// Las dos librerías pesan ~560 KB, así que se cargan recién al tocar el botón para no
+// castigar la carga inicial con el wifi de la escuela.
+const LIB_PDF = ['vendor/jspdf.umd.min.js', 'vendor/html2canvas.min.js'];
+let libsPdf = null;
+function cargarLibsPdf(){
+  if(libsPdf) return libsPdf;
+  libsPdf = Promise.all(LIB_PDF.map(src => new Promise((ok, mal) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = ok; s.onerror = () => mal(new Error('No se pudo cargar ' + src));
+    document.head.appendChild(s);
+  })));
+  libsPdf.catch(() => { libsPdf = null; }); // si falló (corte de red), permitir reintentar
+  return libsPdf;
+}
+
+const TEXTO_WA = 'Constancias de fiscales — Elecciones 3 de noviembre de 2026 — CTA La Matanza';
+const nombrePdf = lista => lista.length === 1
+  ? 'constancia-CTA-' + lista[0].dni + '.pdf'
+  : 'constancias-CTA-' + lista.length + '.pdf';
+
+async function armarPdf(lista, avisar){
+  await cargarLibsPdf();
+  const caja = $('impresion'); caja.textContent = '';
+  lista.forEach(f => caja.appendChild(H.crearModelo(tipoDe(f), disenos[tipoDe(f)], f)));
+  await listoParaDibujar(caja);
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait', compress:true });
+  const hojas = Array.from(caja.querySelectorAll('.hoja'));
+  for(let i = 0; i < hojas.length; i++){
+    avisar('Armando PDF… ' + (i + 1) + ' de ' + hojas.length);
+    const lienzo = await html2canvas(hojas[i], { scale:3, backgroundColor:'#ffffff', useCORS:true, logging:false });
+    if(i) pdf.addPage();
+    pdf.addImage(lienzo.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+    lienzo.width = lienzo.height = 0; // liberar memoria cuando son muchas hojas
+  }
+  caja.textContent = '';
+  return pdf.output('blob');
+}
+
+function descargarPdf(blob, nombre){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+$('btnWhatsapp').addEventListener('click', async () => {
+  const lista = visibles().filter(f => elegidos.has(f.id));
+  if(!lista.length) return;
+  const boton = $('btnWhatsapp'), original = 'Enviar por WhatsApp';
+  const nombre = nombrePdf(lista);
+  const wa = 'https://wa.me/?text=' + encodeURIComponent(TEXTO_WA);
+  const puedeCompartir = !!(navigator.share && navigator.canShare && window.File);
+  // Si el navegador no sabe compartir archivos (típico en computadora), abrimos WhatsApp
+  // ya mismo para no perder el gesto del clic (si no, el navegador bloquea la pestaña).
+  if(!puedeCompartir) window.open(wa, '_blank', 'noopener,noreferrer');
+
+  ocupado = true; boton.disabled = true; $('btnImprimir').disabled = true;
+  const avisar = t => { boton.textContent = t; };
+  let blob = null;
+  try{
+    avisar('Preparando…');
+    blob = await armarPdf(lista, avisar);
+    const archivo = new File([blob], nombre, { type:'application/pdf' });
+    let comparte = false;
+    try{ comparte = puedeCompartir && navigator.canShare({ files:[archivo] }); }catch(e){ comparte = false; }
+    if(comparte){
+      avisar('Abriendo WhatsApp…');
+      await navigator.share({ files:[archivo], text:TEXTO_WA });
+      return; // compartido
+    }
+    descargarPdf(blob, nombre);
+    if(puedeCompartir) window.open(wa, '_blank', 'noopener,noreferrer');
+  }catch(err){
+    // AbortError = el usuario cerró el selector de compartir: no es un error
+    if(err && err.name === 'AbortError') return;
+    if(blob){
+      // el PDF ya está armado: se lo damos igual en vez de dejarlo sin nada
+      descargarPdf(blob, nombre);
+      if(puedeCompartir) window.open(wa, '_blank', 'noopener,noreferrer');
+      alert('No se pudo abrir WhatsApp automáticamente, pero el PDF ya se descargó (' + nombre +
+        '). Adjuntalo desde WhatsApp.');
+    }else{
+      $('impresion').textContent = '';
+      alert('No se pudo preparar el PDF' + (err && err.message ? ': ' + err.message : '') +
+        '.\n\nProbá con "Imprimir" y elegí "Guardar como PDF" en la ventana de impresión.');
+    }
+  }finally{
+    ocupado = false; boton.textContent = original; actualizarElegidas();
+  }
+});
+
 </script>
 </body>
 </html>
