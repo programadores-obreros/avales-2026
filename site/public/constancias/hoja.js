@@ -131,8 +131,8 @@
 
   // ---------- Formulario N°2 · Designación de Fiscal General ----------
   // Mismo encabezado, cuerpo y pie que el N°3, sin mesa: el renglón 2 termina en "al" y el renglón 3
-  // es "Cro./A ____ D.N.I. ____". Lleva solo las firmas de Cappussi y del apoderado de Lista 6
-  // (más el logo provincial): Lista 10 y la Sub Delegada firman a mano.
+  // es "Cro./A ____ D.N.I. ____". Lleva las mismas cuatro firmas que el N°3 (Cappussi, Lista 6,
+  // Lista 10 y Sub Delegada) más los dos logos.
   var HTML_GENERAL = [
     '<div class="el franja" data-ck="franja" data-x="16" data-y="22"></div>',
     '<div class="el fecha" data-ck="fecha" data-x="23" data-y="28">ELECCIONES 3 DE NOVIEMBRE DE 2026</div>',
@@ -153,14 +153,16 @@
     '<div class="el" data-ck="logoProv" data-x="80" data-y="230" style="width:50mm"><img src="assets/logo-cta-provincial.png" alt="CTA de los Trabajadores Provincia de Buenos Aires"></div>',
     '<div class="el firma" data-ck="firmaL6" data-x="140" data-y="186" style="width:48mm"><img data-firma="firma-apoderado-l6" alt="Firma apoderado Lista 6"></div>',
     '<div class="el linea-l6" data-ck="lineaL6" data-x="136" data-y="214"></div>',
-    '<div class="el rotulo-l6" data-ck="rotuloL6" data-x="136" data-y="216">APODERADO DE LISTA 6</div>'
+    '<div class="el rotulo-l6" data-ck="rotuloL6" data-x="136" data-y="216">APODERADO DE LISTA 6</div>',
+    '<div class="el firma" data-ck="firmaL10" data-x="28" data-y="170" style="width:38.3mm"><img data-firma="firma-lista10" alt="Firma apoderado Lista 10"></div>',
+    '<div class="el firma" data-ck="aclaL10" data-x="42" data-y="185" style="width:26.1mm"><img data-firma="acla-lista10" alt="Aclaración Lista 10"></div>',
+    '<div class="el firma" data-ck="firmaOrrego" data-x="13" data-y="217" style="width:40.3mm"><img data-firma="firma-orrego" alt="Firma Sub Delegada"></div>',
+    '<div class="el firma" data-ck="aclaOrrego" data-x="19" data-y="230" style="width:36.4mm"><img data-firma="acla-orrego" alt="Aclaración Sub Delegada"></div>'
   ].join('\n');
 
-  // diseño por defecto del N°2: la misma calibración del N°3, sin las piezas que no tiene
+  // diseño por defecto del N°2: la misma calibración del N°3 (las piezas que el N°2 no tiene,
+  // como el dato de mesa, no están en su HTML y se ignoran solas)
   var DISENO_GENERAL = JSON.parse(JSON.stringify(DISENO));
-  ['firmaL10', 'aclaL10', 'firmaOrrego', 'aclaOrrego'].forEach(function(k){
-    delete DISENO_GENERAL.componentes[k]; delete DISENO_GENERAL.visibles[k];
-  });
 
   var MODELOS = {
     mesa:{ html:HTML, diseno:DISENO, campos:CAMPOS_FIJOS, nombre:'Fiscal de Mesa', formulario:'N°3' },
