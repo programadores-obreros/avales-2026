@@ -47,6 +47,13 @@
   .padron{ min-height:1.4em; margin-top:8px; font-size:15px; color:var(--suave); }
   .padron.si{ color:var(--verde); font-weight:600; } .padron.no{ color:#9a6700; font-weight:600; }
   .grilla > div{ min-width:0; }
+  .grilla.sin-mesa{ grid-template-columns:200px 1fr; }
+  .tipos{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .tipo{ flex:1; min-width:200px; display:flex; gap:10px; align-items:flex-start; border:2px solid #cfcfcf; border-radius:10px; padding:10px 12px; cursor:pointer; background:#fff; }
+  .tipo input{ width:20px; height:20px; margin-top:2px; accent-color:var(--rojo); }
+  .tipo b{ display:block; } .tipo small{ color:var(--suave); font-size:14px; }
+  .tipo:has(input:checked){ border-color:var(--rojo); background:#fff5f5; }
+  .etiqueta-general{ display:inline-block; background:#eef3ff; color:#1d3a8a; border-radius:6px; padding:1px 7px; font-size:14px; font-weight:600; }
   details{ margin-top:12px; } summary{ cursor:pointer; color:var(--suave); }
   .grilla3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:10px; }
   .acciones{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center; }
@@ -108,14 +115,18 @@
     <section class="paso">
       <h2><span class="num">1</span> <span id="tituloForm">Cargá un compañero o compañera</span></h2>
       <form id="formFiscal" autocomplete="off">
-        <div class="grilla">
+        <div class="tipos" role="radiogroup" aria-label="Tipo de constancia">
+          <label class="tipo"><input type="radio" name="tipo" value="mesa" checked><span><b>Fiscal de Mesa</b><small>Formulario N°3 · lleva número de mesa</small></span></label>
+          <label class="tipo"><input type="radio" name="tipo" value="general"><span><b>Fiscal General</b><small>Formulario N°2 · sin mesa</small></span></label>
+        </div>
+        <div class="grilla" id="grillaDatos">
           <div><label class="campo-form" for="fDni">DNI (solo números)</label><input class="entrada" id="fDni" inputmode="numeric" maxlength="10" required></div>
           <div><label class="campo-form" for="fNombre">Apellido y nombre</label><input class="entrada" id="fNombre" maxlength="80" required></div>
-          <div><label class="campo-form" for="fMesa">Mesa N°</label><input class="entrada" id="fMesa" inputmode="numeric" maxlength="10" required></div>
+          <div id="campoMesa"><label class="campo-form" for="fMesa">Mesa N°</label><input class="entrada" id="fMesa" inputmode="numeric" maxlength="10" required></div>
         </div>
         <div class="padron" id="padronMsg"></div>
         <details id="otros">
-          <summary>Otros datos (ya vienen completos: La Matanza · Bs. As. · Fiscal Lista 6)</summary>
+          <summary id="resumenOtros">Otros datos (ya vienen completos: La Matanza · Bs. As. · Fiscal Lista 6)</summary>
           <div class="grilla3">
             <div><label class="campo-form" for="fLocalidad">Localidad</label><input class="entrada" id="fLocalidad" maxlength="40"></div>
             <div><label class="campo-form" for="fProvincia">Provincia</label><input class="entrada" id="fProvincia" maxlength="40"></div>
@@ -152,7 +163,7 @@
       <p class="ayuda">Después de imprimir, falta el sello rojo y las firmas a mano antes de entregarlas.</p>
     </section>
 
-    <div class="pie"><a href="ajustar.html">Ajustar el diseño del formulario (opcional)</a></div>
+    <div class="pie">Ajustar el diseño (opcional): <a href="ajustar.html?modelo=mesa">Fiscal de Mesa (N°3)</a> · <a href="ajustar.html?modelo=general">Fiscal General (N°2)</a></div>
   </div>
 </div>
 
@@ -164,7 +175,9 @@ import * as nube from './nube.js';
 const $ = id => document.getElementById(id);
 const H = window.Hoja;
 
-let fiscales = [], elegidos = new Set(), editando = null, diseno = H.DISENO, cancelarEscucha = null;
+let fiscales = [], elegidos = new Set(), editando = null, cancelarEscucha = null;
+const disenos = { mesa:H.modelo('mesa').diseno, general:H.modelo('general').diseno };
+const tipoDe = f => f.tipo === 'general' ? 'general' : 'mesa';
 
 // ---------- ingreso ----------
 $('verClave').addEventListener('change', e => { $('clave').type = e.target.checked ? 'text' : 'password'; });
@@ -181,16 +194,32 @@ async function mostrarApp(dentro){
   $('app').classList.toggle('oculto', !dentro);
   if(!dentro){ $('clave').value = ''; if(cancelarEscucha){ cancelarEscucha(); cancelarEscucha = null; } return; }
   $('avisoPrueba').classList.toggle('oculto', !nube.modoPrueba);
-  try{ diseno = (await nube.leerDiseno()) || H.DISENO; }catch(e){ diseno = H.DISENO; }
+  for(const m of ['mesa', 'general']){ try{ disenos[m] = (await nube.leerDiseno(m)) || H.modelo(m).diseno; }catch(e){} }
   limpiarForm();
   cancelarEscucha = await nube.escucharFiscales(lista => { fiscales = lista; dibujarTabla(); });
 }
 nube.alCambiarSesion(mostrarApp);
 
 // ---------- carga ----------
+// Fiscal de Mesa (N°3) o Fiscal General (N°2): el General no lleva mesa y cambia el "se designa como"
+const tipoActual = () => document.querySelector('input[name=tipo]:checked').value;
+function aplicarTipo(tipo, cambiarRol){
+  document.querySelector('input[name=tipo][value=' + tipo + ']').checked = true;
+  const general = tipo === 'general', C = H.modelo(tipo).campos;
+  $('campoMesa').classList.toggle('oculto', general); $('fMesa').required = !general;
+  $('grillaDatos').classList.toggle('sin-mesa', general);
+  if(cambiarRol) $('fRol').value = C.rol;
+  $('resumenOtros').textContent = 'Otros datos (ya vienen completos: ' + C.localidad + ' · ' + C.provincia + ' · ' + C.rol + ')';
+}
+document.querySelectorAll('input[name=tipo]').forEach(r => r.addEventListener('change', () => {
+  const otro = H.modelo(tipoActual() === 'general' ? 'mesa' : 'general').campos.rol;
+  aplicarTipo(tipoActual(), !$('fRol').value.trim() || $('fRol').value === otro);
+}));
 function limpiarForm(){
+  const tipo = tipoActual(); // se mantiene el tipo elegido para cargar varios seguidos
   editando = null; $('formFiscal').reset();
-  $('fLocalidad').value = H.CAMPOS_FIJOS.localidad; $('fProvincia').value = H.CAMPOS_FIJOS.provincia; $('fRol').value = H.CAMPOS_FIJOS.rol;
+  $('fLocalidad').value = H.CAMPOS_FIJOS.localidad; $('fProvincia').value = H.CAMPOS_FIJOS.provincia;
+  aplicarTipo(tipo, true);
   $('tituloForm').textContent = 'Cargá un compañero o compañera';
   $('btnGuardar').textContent = 'Agregar a la lista'; $('btnCancelar').classList.add('oculto'); $('errorFiscal').textContent = '';
   avisoPadron(''); nombreAuto = false;
@@ -215,7 +244,7 @@ $('fDni').addEventListener('input', e => {
     if(nombre){
       if(!$('fNombre').value.trim() || nombreAuto){ $('fNombre').value = nombre; nombreAuto = true; }
       avisoPadron('✓ Está en el padrón: ' + nombre, 'si');
-      if(!editando) $('fMesa').focus();
+      if(!editando && tipoActual() === 'mesa') $('fMesa').focus();
     }else{
       avisoPadron('No está en el padrón. Escribí el apellido y nombre a mano.', 'no');
     }
@@ -224,19 +253,20 @@ $('fDni').addEventListener('input', e => {
 
 $('formFiscal').addEventListener('submit', async e => {
   e.preventDefault(); $('errorFiscal').textContent = ''; $('okFiscal').textContent = '';
+  const tipo = tipoActual();
   const datos = {
-    mesa: $('fMesa').value.trim(), nombre: $('fNombre').value.trim().replace(/\s+/g, ' '), dni: $('fDni').value.trim(),
+    tipo, mesa: tipo === 'general' ? '' : $('fMesa').value.trim(), nombre: $('fNombre').value.trim().replace(/\s+/g, ' '), dni: $('fDni').value.trim(),
     localidad: $('fLocalidad').value.trim(), provincia: $('fProvincia').value.trim(), rol: $('fRol').value.trim()
   };
-  if(!datos.mesa || !datos.nombre || !datos.dni){ $('errorFiscal').textContent = 'Completá mesa, nombre y DNI.'; return; }
+  if((tipo === 'mesa' && !datos.mesa) || !datos.nombre || !datos.dni){ $('errorFiscal').textContent = tipo === 'mesa' ? 'Completá DNI, nombre y mesa.' : 'Completá DNI y nombre.'; return; }
   if(!/^\d{7,9}$/.test(datos.dni)){ $('errorFiscal').textContent = 'El DNI tiene que tener entre 7 y 9 números, sin puntos.'; return; }
   const repetido = fiscales.find(f => f.dni === datos.dni && f.id !== editando);
-  if(repetido){ $('errorFiscal').textContent = 'Ese DNI ya está en la lista (' + repetido.nombre + ', mesa ' + repetido.mesa + ').'; return; }
+  if(repetido){ $('errorFiscal').textContent = 'Ese DNI ya está en la lista (' + repetido.nombre + ', ' + (tipoDe(repetido) === 'general' ? 'fiscal general' : 'mesa ' + repetido.mesa) + ').'; return; }
   $('btnGuardar').disabled = true;
   try{
     if(editando){ await nube.editarFiscal(editando, datos); $('okFiscal').textContent = '✓ Cambios guardados'; }
     else{ await nube.agregarFiscal(datos); $('okFiscal').textContent = '✓ Agregado: ' + datos.nombre; }
-    limpiarForm(); $('fMesa').focus();
+    limpiarForm(); $('fDni').focus();
     setTimeout(() => { $('okFiscal').textContent = ''; }, 3000);
   }catch(err){ $('errorFiscal').textContent = 'No se pudo guardar. Revisá la conexión y probá de nuevo.'; }
   finally{ $('btnGuardar').disabled = false; }
@@ -249,8 +279,9 @@ $('todos').addEventListener('change', e => {
 });
 function visibles(){
   const q = $('buscar').value.trim().toLowerCase();
-  const l = fiscales.slice().sort((a, b) => (parseInt(a.mesa) || 0) - (parseInt(b.mesa) || 0) || a.nombre.localeCompare(b.nombre));
-  return q ? l.filter(f => (f.nombre + ' ' + f.dni + ' ' + f.mesa).toLowerCase().includes(q)) : l;
+  // primero los fiscales generales, después por número de mesa
+  const l = fiscales.slice().sort((a, b) => (tipoDe(a) === 'general' ? -1 : parseInt(a.mesa) || 0) - (tipoDe(b) === 'general' ? -1 : parseInt(b.mesa) || 0) || a.nombre.localeCompare(b.nombre));
+  return q ? l.filter(f => (f.nombre + ' ' + f.dni + ' ' + (tipoDe(f) === 'general' ? 'general' : f.mesa)).toLowerCase().includes(q)) : l;
 }
 function celda(tr, texto, cls){ const td = document.createElement('td'); td.textContent = texto; if(cls) td.className = cls; tr.appendChild(td); return td; }
 function dibujarTabla(){
@@ -268,7 +299,9 @@ function dibujarTabla(){
     cb.setAttribute('aria-label', 'Elegir a ' + f.nombre);
     cb.addEventListener('change', () => { cb.checked ? elegidos.add(f.id) : elegidos.delete(f.id); actualizarElegidas(); });
     tdc.appendChild(cb); tr.appendChild(tdc);
-    celda(tr, f.mesa); celda(tr, f.nombre); celda(tr, f.dni, 'col-dni');
+    if(tipoDe(f) === 'general'){ const tg = celda(tr, ''); const et = document.createElement('span'); et.className = 'etiqueta-general'; et.textContent = 'General'; tg.appendChild(et); }
+    else celda(tr, f.mesa);
+    celda(tr, f.nombre); celda(tr, f.dni, 'col-dni');
     const tdb = celda(tr, '', 'botones');
     const be = document.createElement('button'); be.type = 'button'; be.className = 'boton gris chico'; be.textContent = 'Editar';
     be.addEventListener('click', () => editar(f));
@@ -282,7 +315,8 @@ function dibujarTabla(){
 }
 function editar(f){
   editando = f.id;
-  $('fMesa').value = f.mesa; $('fNombre').value = f.nombre; $('fDni').value = f.dni;
+  aplicarTipo(tipoDe(f), false);
+  $('fMesa').value = f.mesa || ''; $('fNombre').value = f.nombre; $('fDni').value = f.dni;
   $('fLocalidad').value = f.localidad || ''; $('fProvincia').value = f.provincia || ''; $('fRol').value = f.rol || '';
   $('tituloForm').textContent = 'Corregí los datos de ' + f.nombre;
   $('btnGuardar').textContent = 'Guardar cambios'; $('btnCancelar').classList.remove('oculto');
@@ -309,7 +343,7 @@ function actualizarElegidas(){
 $('btnImprimir').addEventListener('click', async () => {
   const lista = visibles().filter(f => elegidos.has(f.id));
   const caja = $('impresion'); caja.textContent = '';
-  lista.forEach(f => caja.appendChild(H.crear(diseno, f)));
+  lista.forEach(f => caja.appendChild(H.crearModelo(tipoDe(f), disenos[tipoDe(f)], f)));
   $('btnImprimir').disabled = true; $('btnImprimir').textContent = 'Preparando…';
   try{
     await document.fonts.ready;

@@ -129,6 +129,57 @@
     return hoja;
   }
 
-  window.Hoja = { HTML:HTML, DISENO:DISENO, CAMPOS_FIJOS:CAMPOS_FIJOS, FUENTES:FUENTES,
-    deltas:deltas, aplicarPieza:aplicarPieza, aplicarTinta:aplicarTinta, aplicarCampos:aplicarCampos, crear:crear };
+  // ---------- Formulario N°2 · Designación de Fiscal General ----------
+  // Mismo encabezado, cuerpo y pie que el N°3, sin mesa: el renglón 2 termina en "al" y el renglón 3
+  // es "Cro./A ____ D.N.I. ____". Lleva solo las firmas de Cappussi y del apoderado de Lista 6
+  // (más el logo provincial): Lista 10 y la Sub Delegada firman a mano.
+  var HTML_GENERAL = [
+    '<div class="el franja" data-ck="franja" data-x="16" data-y="22"></div>',
+    '<div class="el fecha" data-ck="fecha" data-x="23" data-y="28">ELECCIONES 3 DE NOVIEMBRE DE 2026</div>',
+    '<div class="el numero" data-ck="numero" data-x="141" data-y="27">FORMULARIO N°2</div>',
+    '<div class="el logo-ctat" data-ck="logoCtaT" data-x="25" data-y="37"><img src="assets/logo-cta-t-gris.png" alt="CTA"></div>',
+    '<div class="el titulo" data-ck="titulo" data-x="16" data-y="88">DESIGNACION DE FISCAL GENERAL</div>',
+    '<div class="el renglon" data-ck="renglon1" data-x="22" data-y="114"><span class="pieza frag" data-ck="txtLocalidad">En la localidad de</span>',
+    ' <span class="campo" style="width:62mm"><span class="pieza dato" data-ck="datoLocalidad" data-campo="localidad"></span></span><span class="pieza frag" data-ck="txtProvincia">provincia de</span>',
+    ' <span class="campo" style="width:36mm"><span class="pieza dato" data-ck="datoProvincia" data-campo="provincia"></span></span><span class="pieza frag" data-ck="txtALos">a los</span></div>',
+    '<div class="el renglon" data-ck="renglon2" data-x="22" data-y="127"><span class="pieza frag grande" data-ck="txtDia">3</span><span class="pieza frag" data-ck="txtMes">días del mes de noviembre</span><span class="pieza frag anio" data-ck="txtAnio">de <b>2026</b></span><span class="pieza frag" data-ck="txtDesigna">, se designa como</span>',
+    ' <span class="campo" style="width:58mm"><span class="pieza dato" data-ck="datoRol" data-campo="rol"></span></span><span class="pieza frag" data-ck="txtAl">al</span></div>',
+    '<div class="el renglon" data-ck="renglon3" data-x="22" data-y="139"><span class="pieza frag" data-ck="txtCro">Cro./A</span>',
+    ' <span class="campo" style="width:96mm"><span class="pieza dato" data-ck="datoNombre" data-campo="nombre"></span></span><span class="pieza frag" data-ck="txtDni">D.N.I.</span>',
+    ' <span class="campo" style="width:36mm"><span class="pieza dato" data-ck="datoDni" data-campo="dni"></span></span></div>',
+    '<div class="el firma" data-ck="firmaCappussi" data-x="74" data-y="200" style="width:60mm"><img data-firma="firma-cappussi" alt="Firma Cappussi"></div>',
+    '<div class="el texto-firma" data-ck="aclaCappussi" data-x="70" data-y="215" style="width:70mm">Cappussi Luciana</div>',
+    '<div class="el texto-firma" data-ck="cargoDelegada" data-x="70" data-y="220" style="width:70mm">Delegada Electoral CTA-T Pcia. de Bs. As.</div>',
+    '<div class="el" data-ck="logoProv" data-x="80" data-y="230" style="width:50mm"><img src="assets/logo-cta-provincial.png" alt="CTA de los Trabajadores Provincia de Buenos Aires"></div>',
+    '<div class="el firma" data-ck="firmaL6" data-x="140" data-y="186" style="width:48mm"><img data-firma="firma-apoderado-l6" alt="Firma apoderado Lista 6"></div>',
+    '<div class="el linea-l6" data-ck="lineaL6" data-x="136" data-y="214"></div>',
+    '<div class="el rotulo-l6" data-ck="rotuloL6" data-x="136" data-y="216">APODERADO DE LISTA 6</div>'
+  ].join('\n');
+
+  // diseño por defecto del N°2: la misma calibración del N°3, sin las piezas que no tiene
+  var DISENO_GENERAL = JSON.parse(JSON.stringify(DISENO));
+  ['firmaL10', 'aclaL10', 'firmaOrrego', 'aclaOrrego'].forEach(function(k){
+    delete DISENO_GENERAL.componentes[k]; delete DISENO_GENERAL.visibles[k];
+  });
+
+  var MODELOS = {
+    mesa:{ html:HTML, diseno:DISENO, campos:CAMPOS_FIJOS, nombre:'Fiscal de Mesa', formulario:'N°3' },
+    general:{ html:HTML_GENERAL, diseno:DISENO_GENERAL, nombre:'Fiscal General', formulario:'N°2',
+      campos:{ localidad:CAMPOS_FIJOS.localidad, provincia:CAMPOS_FIJOS.provincia, rol:'Fiscal Gral. Lista 6' } }
+  };
+  function modelo(m){ return MODELOS[m] || MODELOS.mesa; }
+
+  // arma una hoja completa de cualquiera de los dos formularios
+  function crearModelo(m, diseno, campos){
+    var M = modelo(m), d = diseno || M.diseno;
+    var hoja = document.createElement('div'); hoja.className = 'hoja'; hoja.innerHTML = M.html;
+    var dl = deltas(hoja, d);
+    hoja.querySelectorAll('.el, .pieza').forEach(function(el){ aplicarPieza(el, dl[el.dataset.ck], d.visibles); });
+    aplicarTinta(hoja, d.tinta);
+    aplicarCampos(hoja, campos, d.letra);
+    return hoja;
+  }
+
+  window.Hoja = { HTML:HTML, DISENO:DISENO, CAMPOS_FIJOS:CAMPOS_FIJOS, FUENTES:FUENTES, MODELOS:MODELOS, modelo:modelo,
+    deltas:deltas, aplicarPieza:aplicarPieza, aplicarTinta:aplicarTinta, aplicarCampos:aplicarCampos, crear:crear, crearModelo:crearModelo };
 })();

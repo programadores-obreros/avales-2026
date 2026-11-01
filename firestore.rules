@@ -7,9 +7,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email == 'constancias@ctamulticolor.com.ar';
     }
     function texto(v, max) { return v is string && v.size() <= max; }
+    // tipo: 'mesa' (Formulario N°3, lleva mesa) o 'general' (N°2, sin mesa). Sin tipo = mesa (cargas viejas).
     function fiscalValido(d) {
-      return d.keys().hasOnly(['mesa', 'nombre', 'dni', 'localidad', 'provincia', 'rol', 'creadoEn'])
-        && texto(d.mesa, 10) && d.mesa.size() > 0
+      return d.keys().hasOnly(['tipo', 'mesa', 'nombre', 'dni', 'localidad', 'provincia', 'rol', 'creadoEn'])
+        && d.get('tipo', 'mesa') in ['mesa', 'general']
+        && texto(d.mesa, 10) && (d.mesa.size() > 0 || d.get('tipo', 'mesa') == 'general')
         && texto(d.nombre, 80) && d.nombre.size() > 0
         && d.dni is string && d.dni.matches('^[0-9]{7,9}$')
         && texto(d.localidad, 40) && texto(d.provincia, 40) && texto(d.rol, 40);
@@ -29,9 +31,9 @@ service cloud.firestore {
       allow get: if esEquipo();
     }
 
-    match /config/diseno {
-      allow read: if esEquipo();
-      allow write: if esEquipo()
+    match /config/{id} {
+      allow read: if esEquipo() && id in ['diseno', 'diseno-general'];
+      allow write: if esEquipo() && id in ['diseno', 'diseno-general']
         && request.resource.data.keys().hasOnly(['json', 'actualizado'])
         && request.resource.data.json is string && request.resource.data.json.size() < 20000;
     }

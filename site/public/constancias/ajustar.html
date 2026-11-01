@@ -88,7 +88,8 @@
 <body>
 <header>
   <h1>Ajustar diseño</h1>
-  <p class="subt">Formulario N°3 · acomodá cada pieza contra la foto original. Opcional: si no tocás nada, se usa el diseño actual.</p>
+  <p class="subt"><b id="nombreModelo">Formulario N°3 · Fiscal de Mesa</b> · acomodá cada pieza contra la foto original. Opcional: si no tocás nada, se usa el diseño actual.</p>
+  <a id="linkOtro" href="?modelo=general">Ir al otro formulario</a>
   <a href="./">← Volver a la lista</a>
 </header>
 
@@ -104,7 +105,7 @@
 
     <div class="grp">
       <div class="grp-h">Datos de ejemplo</div>
-      <div class="row"><label>Mesa N°</label><input type="text" data-f="mesa" value="12"></div>
+      <div class="row" id="filaMesa"><label>Mesa N°</label><input type="text" data-f="mesa" value="12"></div>
       <div class="row"><label>Cro./A</label><input type="text" data-f="nombre" value="Juana Pérez"></div>
       <div class="row"><label>D.N.I.</label><input type="text" data-f="dni" value="12345678"></div>
       <div class="row"><label>Letra</label>
@@ -136,12 +137,13 @@
       <label class="chk"><input type="checkbox" data-vis="firmaCappussi"> Firma Cappussi (Delegada Electoral)</label>
       <label class="chk"><input type="checkbox" data-vis="logoProv"> Logo CTA provincial (La Plata)</label>
       <label class="chk"><input type="checkbox" data-vis="firmaL6"> Firma apoderado Lista 6</label>
-      <label class="chk"><input type="checkbox" data-vis="firmaL10"> Firma apoderado Lista 10</label>
-      <label class="chk"><input type="checkbox" data-vis="firmaOrrego"> Firma Sub Delegada (Orrego)</label>
+      <label class="chk solo-mesa"><input type="checkbox" data-vis="firmaL10"> Firma apoderado Lista 10</label>
+      <label class="chk solo-mesa"><input type="checkbox" data-vis="firmaOrrego"> Firma Sub Delegada (Orrego)</label>
       <div class="row"><label>Tinta</label>
         <div class="btnrow" id="tintaSeg" style="flex:1"><button class="btn" data-tinta="negro">Negro</button><button class="btn" data-tinta="azul">Azul</button></div>
       </div>
-      <div class="hint">Las cuatro firmas se imprimen. Desmarcá las que quieras dejar en blanco para firmar a mano.</div>
+      <div class="hint solo-mesa">Las cuatro firmas se imprimen. Desmarcá las que quieras dejar en blanco para firmar a mano.</div>
+      <div class="hint solo-general">Apoderado de Lista 10 y Sub Delegada firman a mano en cada formulario.</div>
     </div>
 
     <div class="grp ref">
@@ -180,14 +182,22 @@ import * as nube from './nube.js';
 const H = window.Hoja;
 const $ = id => document.getElementById(id);
 const stage = $('stage');
-stage.insertAdjacentHTML('beforeend', H.HTML);
+// qué formulario se ajusta: ?modelo=mesa (N°3, por defecto) o ?modelo=general (N°2)
+const MODELO = new URLSearchParams(location.search).get('modelo') === 'general' ? 'general' : 'mesa';
+const M = H.modelo(MODELO);
+stage.insertAdjacentHTML('beforeend', M.html);
+$('nombreModelo').textContent = 'Formulario ' + M.formulario + ' · ' + M.nombre;
+$('linkOtro').href = '?modelo=' + (MODELO === 'general' ? 'mesa' : 'general');
+$('linkOtro').textContent = 'Ir a ' + (MODELO === 'general' ? 'Fiscal de Mesa (N°3)' : 'Fiscal General (N°2)');
+document.querySelectorAll(MODELO === 'general' ? '.solo-mesa' : '.solo-general').forEach(e => e.classList.add('oculto'));
+if(MODELO === 'general') $('filaMesa').classList.add('oculto');
 
 const els = {};
 stage.querySelectorAll('.el, .pieza').forEach(el => { els[el.dataset.ck] = el; });
 const KEYS = Object.keys(els);
 const LABELS = {
   franja:'Franja negra', fecha:'"ELECCIONES 3 DE NOVIEMBRE…"', numero:'"FORMULARIO N°3"', logoCtaT:'Logo CTA-T (cabecera)',
-  titulo:'Título', renglon1:'Renglón 1: localidad / provincia', renglon2:'Renglón 2: fecha / designa como', renglon3:'Renglón 3: mesa / nombre / DNI',
+  titulo:'Título', renglon1:'Renglón 1: localidad / provincia', renglon2:'Renglón 2: fecha / designa como', renglon3:MODELO === 'general' ? 'Renglón 3: nombre / DNI' : 'Renglón 3: mesa / nombre / DNI',
   firmaCappussi:'Firma Cappussi', aclaCappussi:'Aclaración "Cappussi Luciana"', cargoDelegada:'Cargo "Delegada Electoral CTA-T…"',
   logoProv:'Logo CTA provincial', firmaL6:'Firma apoderado Lista 6', lineaL6:'Línea punteada Lista 6', rotuloL6:'Rótulo "APODERADO DE LISTA 6"',
   firmaL10:'Firma apoderado Lista 10', aclaL10:'Aclaración Lista 10', firmaOrrego:'Firma Sub Delegada', aclaOrrego:'Aclaración Sub Delegada',
@@ -195,17 +205,17 @@ const LABELS = {
   datoMesa:'Dato: mesa N°', datoNombre:'Dato: Cro./A', datoDni:'Dato: D.N.I.',
   txtLocalidad:'Texto: "En la localidad de"', txtProvincia:'Texto: "provincia de"', txtALos:'Texto: "a los"',
   txtDia:'Texto: "3"', txtMes:'Texto: "días del mes de noviembre"', txtAnio:'Texto: "de 2026"', txtDesigna:'Texto: ", se designa como"', txtDeLa:'Texto: "De la"',
-  txtMesa:'Texto: "mesa N°"', txtCro:'Texto: "al Cro./A"', txtDni:'Texto: "D.N.I."'
+  txtMesa:'Texto: "mesa N°"', txtCro:MODELO === 'general' ? 'Texto: "Cro./A"' : 'Texto: "al Cro./A"', txtDni:'Texto: "D.N.I."', txtAl:'Texto: "al"'
 };
 const REF0 = { dx:-3.8, dy:-14, scale:95, opacity:40 };
 const r1 = n => Math.round(n * 10) / 10;
 
 let state, guardado = '', target = null;
 function desdeDiseno(d){
-  return { comp:H.deltas(stage, d), vis:Object.assign({ firmaCappussi:true, logoProv:true, firmaL6:true, firmaL10:true, aclaL10:true, firmaOrrego:true, aclaOrrego:true }, d.visibles),
+  return { comp:H.deltas(stage, d), vis:Object.assign({}, M.diseno.visibles, d.visibles),
     tinta:d.tinta || 'negro', letra:Object.assign({}, H.DISENO.letra, d.letra),
     ref:state ? state.ref : Object.assign({}, REF0),
-    campos:Object.assign({}, H.CAMPOS_FIJOS, state ? state.campos : { mesa:'12', nombre:'Juana Pérez', dni:'12345678' }) };
+    campos:Object.assign({}, M.campos, state ? state.campos : { mesa:MODELO === 'general' ? '' : '12', nombre:'Juana Pérez', dni:'12345678' }) };
 }
 function aDiseno(){
   const componentes = {};
@@ -216,7 +226,7 @@ function aDiseno(){
         ? { posicion_mm:{ x:r1(+els[k].dataset.x + c.dx), y:r1(+els[k].dataset.y + c.dy) }, escala_pct:c.scale, giro_grados:c.rot }
         : { desplazamiento_mm:{ x:r1(c.dx), y:r1(c.dy) }, escala_pct:c.scale, giro_grados:c.rot };
   });
-  return { formulario:'CTA N°3 — Designación de Fiscal de Mesa', tinta:state.tinta, letra:state.letra, visibles:state.vis, componentes };
+  return { formulario:'CTA ' + M.formulario + ' — Designación de ' + M.nombre, tinta:state.tinta, letra:state.letra, visibles:state.vis, componentes };
 }
 function renderOut(){
   const txt = JSON.stringify(aDiseno(), null, 2);
@@ -244,7 +254,7 @@ function syncUI(){
 
 // ---------- tinta / visibilidad / letra / datos ----------
 $('tintaSeg').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; state.tinta = b.dataset.tinta; applyTinta(); save(); });
-document.querySelectorAll('[data-vis]').forEach(cb => cb.addEventListener('change', () => { state.vis[cb.dataset.vis] = cb.checked; applyEl(cb.dataset.vis); save(); }));
+document.querySelectorAll('[data-vis]').forEach(cb => cb.addEventListener('change', () => { state.vis[cb.dataset.vis] = cb.checked; if(els[cb.dataset.vis]) applyEl(cb.dataset.vis); save(); }));
 $('fuente').addEventListener('change', e => { state.letra.fuente = e.target.value; applyCampos(); save(); });
 $('fSize').addEventListener('input', e => { state.letra.size = +e.target.value; $('fSizeVal').textContent = e.target.value + 'pt'; applyCampos(); save(); });
 $('fColor').addEventListener('change', e => { state.letra.color = e.target.value; applyCampos(); save(); });
@@ -333,12 +343,12 @@ $('zoom').addEventListener('input', e => applyZoom(+e.target.value));
 function aviso(t, err){ $('msg').textContent = t; $('msg').classList.toggle('err', !!err); if(!err) setTimeout(() => { if($('msg').textContent === t) $('msg').textContent = ''; }, 3000); }
 $('btnGuardar').addEventListener('click', async () => {
   $('btnGuardar').disabled = true;
-  try{ const d = aDiseno(); await nube.guardarDiseno(d); guardado = JSON.stringify(d, null, 2); renderOut(); aviso('✓ Diseño guardado para todos'); }
+  try{ const d = aDiseno(); await nube.guardarDiseno(d, MODELO); guardado = JSON.stringify(d, null, 2); renderOut(); aviso('✓ Diseño guardado para todos'); }
   catch(e){ aviso('No se pudo guardar. Revisá la conexión.', true); }
   finally{ $('btnGuardar').disabled = false; }
 });
 $('btnDeshacer').addEventListener('click', async () => { await cargar(); aviso('Cambios descartados'); });
-$('btnOriginal').addEventListener('click', () => { state = desdeDiseno(H.DISENO); applyAll(); renderOut(); aviso('Diseño original cargado: guardalo si querés usarlo'); });
+$('btnOriginal').addEventListener('click', () => { state = desdeDiseno(M.diseno); applyAll(); renderOut(); aviso('Diseño original cargado: guardalo si querés usarlo'); });
 $('copyBtn').addEventListener('click', () => {
   navigator.clipboard.writeText($('out').textContent).then(() => aviso('✓ Copiado'), () => aviso('Copialo a mano del recuadro', true));
 });
@@ -346,8 +356,8 @@ $('printBtn').addEventListener('click', () => { KEYS.forEach(x => els[x].classLi
 
 async function cargar(){
   let d = null;
-  try{ d = await nube.leerDiseno(); }catch(e){}
-  state = desdeDiseno(d || H.DISENO);
+  try{ d = await nube.leerDiseno(MODELO); }catch(e){}
+  state = desdeDiseno(d || M.diseno);
   guardado = JSON.stringify(aDiseno(), null, 2);
   applyAll(); renderOut();
 }

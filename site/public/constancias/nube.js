@@ -70,16 +70,17 @@ export async function buscarPadron(dni){
 }
 
 // ---------- diseño compartido ----------
-const LS_DISENO = 'cta-prueba-diseno';
-export async function leerDiseno(){
-  if(modoPrueba){ try{ return JSON.parse(localStorage.getItem(LS_DISENO)); }catch(e){ return null; } }
+// un documento por formulario: config/diseno (N°3 mesa) y config/diseno-general (N°2)
+const docDiseno = modelo => modelo === 'general' ? 'diseno-general' : 'diseno';
+export async function leerDiseno(modelo){
+  if(modoPrueba){ try{ return JSON.parse(localStorage.getItem('cta-prueba-' + docDiseno(modelo))); }catch(e){ return null; } }
   await cargarSdk();
-  const s = await fs.getDoc(fs.doc(db, 'config', 'diseno'));
+  const s = await fs.getDoc(fs.doc(db, 'config', docDiseno(modelo)));
   return s.exists() ? JSON.parse(s.data().json) : null;
 }
-export async function guardarDiseno(diseno){
+export async function guardarDiseno(diseno, modelo){
   const json = JSON.stringify(diseno);
-  if(modoPrueba){ localStorage.setItem(LS_DISENO, json); return; }
+  if(modoPrueba){ localStorage.setItem('cta-prueba-' + docDiseno(modelo), json); return; }
   await cargarSdk();
-  await fs.setDoc(fs.doc(db, 'config', 'diseno'), { json, actualizado:fs.serverTimestamp() });
+  await fs.setDoc(fs.doc(db, 'config', docDiseno(modelo)), { json, actualizado:fs.serverTimestamp() });
 }
