@@ -69,6 +69,11 @@
   .vacio{ color:var(--suave); padding:18px 0; text-align:center; }
   .confirmar{ display:inline-flex; gap:6px; align-items:center; }
   .imprimir-caja{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .blancos{ display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:16px; padding:12px 14px; border:2px dashed #d6d6d6; border-radius:10px; }
+  .blancos label{ display:flex; align-items:center; gap:8px; font-weight:600; }
+  .blancos input[type=checkbox]{ width:20px; height:20px; accent-color:var(--rojo); }
+  .blancos select, .blancos input[type=number]{ padding:8px 10px; border:2px solid #cfcfcf; border-radius:8px; font-size:16px; background:#fff; }
+  .blancos input[type=number]{ width:80px; }
   .ayuda{ color:var(--suave); font-size:15px; margin:10px 0 0; }
   .pie{ text-align:center; color:var(--suave); font-size:14px; padding:6px 0 24px; }
   .pie a{ color:var(--suave); }
@@ -163,6 +168,17 @@
       </div>
       <p class="ayuda">Sale una hoja A4 por cada compañero o compañera. En la ventana que se abre podés elegir tu impresora o <b>"Guardar como PDF"</b>. Si aparecen márgenes o encabezados, desactivalos en "Más opciones".</p>
       <p class="ayuda">Con <b>Enviar por WhatsApp</b> se arma un PDF con todas las elegidas (una hoja por página) y se abre WhatsApp para elegir a quién mandárselo. Si tu navegador no lo permite, se descarga el PDF y se abre WhatsApp Web para adjuntarlo.</p>
+      <div class="blancos">
+        <label><input type="checkbox" id="chkBlanco"> Necesito hojas <b>en blanco</b></label>
+        <label class="oculto" id="blancoOpciones">
+          <select id="fTipoBlanco" aria-label="Tipo de hoja en blanco">
+            <option value="general">Fiscal General (N°2)</option>
+            <option value="mesa">Fiscal de Mesa (N°3)</option>
+          </select>
+          <input type="number" id="fCantBlanco" value="1" min="1" max="100" inputmode="numeric" aria-label="Cantidad de hojas en blanco">
+        </label>
+      </div>
+      <p class="ayuda oculto" id="blancoAyuda">Para quien no está en el padrón (se sumó después, o lo designa la junta): salen <b>sin nombre, DNI, mesa ni "se designa como"</b>, para completar a mano. Las firmas salen impresas igual; el sello rojo va después.</p>
       <p class="ayuda">Después de imprimir, falta el sello rojo y las firmas a mano antes de entregarlas.</p>
     </section>
 
@@ -345,13 +361,45 @@ function pedirBorrar(td, f){
 }
 // mientras se arma un PDF o una impresión no se toca el estado de los botones
 let ocupado = false;
+
+// ---------- hojas en blanco ----------
+// Para quien no está en el padrón (se sumó después, o lo designa la junta): la hoja sale sin
+// nombre, DNI, mesa ni "se designa como", para completar a mano. Las firmas van impresas igual.
+function cantidadBlancos(){
+  if(!$('chkBlanco').checked) return 0;
+  const n = parseInt($('fCantBlanco').value, 10);
+  return Number.isFinite(n) ? Math.min(Math.max(n, 0), 100) : 0;
+}
+// las elegidas de la lista + las hojas en blanco pedidas, en ese orden
+function fichasAEmitir(){
+  const lista = visibles().filter(f => elegidos.has(f.id));
+  const n = cantidadBlancos(), tipo = $('fTipoBlanco').value;
+  for(let i = 0; i < n; i++) lista.push({ blanco:true, tipo });
+  return lista;
+}
+function crearHoja(f){
+  if(!f.blanco) return H.crearModelo(tipoDe(f), disenos[tipoDe(f)], f);
+  const M = H.modelo(f.tipo);
+  // solo quedan impresas la localidad y la provincia; el resto se completa a mano
+  return H.crearModelo(f.tipo, disenos[f.tipo], { localidad:M.campos.localidad, provincia:M.campos.provincia });
+}
+$('chkBlanco').addEventListener('change', () => {
+  const on = $('chkBlanco').checked;
+  $('blancoOpciones').classList.toggle('oculto', !on);
+  $('blancoAyuda').classList.toggle('oculto', !on);
+  if(on) $('fCantBlanco').focus();
+  actualizarElegidas();
+});
+$('fCantBlanco').addEventListener('input', actualizarElegidas);
+$('fTipoBlanco').addEventListener('change', actualizarElegidas);
+
 function actualizarElegidas(){
-  const n = elegidos.size;
   if(ocupado) return;
-  $('btnImprimir').disabled = n === 0;
-  $('btnImprimir').textContent = n ? 'Imprimir ' + n + (n === 1 ? ' constancia' : ' constancias') : 'Imprimir las elegidas';
-  $('btnWhatsapp').disabled = n === 0;
-  $('elegidas').textContent = n ? '' : 'Marcá en la lista a quiénes querés imprimir o enviar.';
+  const total = elegidos.size + cantidadBlancos();
+  $('btnImprimir').disabled = total === 0;
+  $('btnImprimir').textContent = total ? 'Imprimir ' + total + (total === 1 ? ' constancia' : ' constancias') : 'Imprimir las elegidas';
+  $('btnWhatsapp').disabled = total === 0;
+  $('elegidas').textContent = total ? '' : 'Marcá en la lista a quiénes querés imprimir o enviar.';
 }
 
 // document.fonts.ready y el decode de las imágenes pueden quedarse colgados (fuente que no carga,
@@ -368,9 +416,9 @@ async function listoParaDibujar(caja){
 
 // ---------- impresión ----------
 $('btnImprimir').addEventListener('click', async () => {
-  const lista = visibles().filter(f => elegidos.has(f.id));
+  const lista = fichasAEmitir();
   const caja = $('impresion'); caja.textContent = '';
-  lista.forEach(f => caja.appendChild(H.crearModelo(tipoDe(f), disenos[tipoDe(f)], f)));
+  lista.forEach(f => caja.appendChild(crearHoja(f)));
   ocupado = true; $('btnImprimir').disabled = true; $('btnWhatsapp').disabled = true;
   $('btnImprimir').textContent = 'Preparando…';
   try{ await listoParaDibujar(caja); }
@@ -396,14 +444,17 @@ function cargarLibsPdf(){
 }
 
 const TEXTO_WA = 'Constancias de fiscales — Elecciones 3 de noviembre de 2026 — CTA La Matanza';
-const nombrePdf = lista => lista.length === 1
-  ? 'constancia-CTA-' + lista[0].dni + '.pdf'
-  : 'constancias-CTA-' + lista.length + '.pdf';
+const nombrePdf = lista => {
+  if(lista.every(f => f.blanco))
+    return lista.length === 1 ? 'constancia-en-blanco.pdf' : 'constancias-en-blanco-' + lista.length + '.pdf';
+  if(lista.length === 1) return 'constancia-CTA-' + lista[0].dni + '.pdf';
+  return 'constancias-CTA-' + lista.length + '.pdf';
+};
 
 async function armarPdf(lista, avisar){
   await cargarLibsPdf();
   const caja = $('impresion'); caja.textContent = '';
-  lista.forEach(f => caja.appendChild(H.crearModelo(tipoDe(f), disenos[tipoDe(f)], f)));
+  lista.forEach(f => caja.appendChild(crearHoja(f)));
   await listoParaDibujar(caja);
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait', compress:true });
@@ -428,7 +479,7 @@ function descargarPdf(blob, nombre){
 }
 
 $('btnWhatsapp').addEventListener('click', async () => {
-  const lista = visibles().filter(f => elegidos.has(f.id));
+  const lista = fichasAEmitir();
   if(!lista.length) return;
   const boton = $('btnWhatsapp'), original = 'Enviar por WhatsApp';
   const nombre = nombrePdf(lista);
