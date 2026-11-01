@@ -262,14 +262,22 @@ $('formFiscal').addEventListener('submit', async e => {
   if(!/^\d{7,9}$/.test(datos.dni)){ $('errorFiscal').textContent = 'El DNI tiene que tener entre 7 y 9 números, sin puntos.'; return; }
   const repetido = fiscales.find(f => f.dni === datos.dni && f.id !== editando);
   if(repetido){ $('errorFiscal').textContent = 'Ese DNI ya está en la lista (' + repetido.nombre + ', ' + (tipoDe(repetido) === 'general' ? 'fiscal general' : 'mesa ' + repetido.mesa) + ').'; return; }
-  $('btnGuardar').disabled = true;
+  // El formulario se limpia ya, sin esperar la confirmación del servidor (con wifi lento puede tardar
+  // segundos y el docente ya está escribiendo el siguiente DNI). Si falla, se vuelven a poner los datos.
+  const id = editando;
+  limpiarForm(); $('fDni').focus();
+  $('okFiscal').textContent = 'Guardando ' + datos.nombre + '…';
   try{
-    if(editando){ await nube.editarFiscal(editando, datos); $('okFiscal').textContent = '✓ Cambios guardados'; }
+    if(id){ await nube.editarFiscal(id, datos); $('okFiscal').textContent = '✓ Cambios guardados: ' + datos.nombre; }
     else{ await nube.agregarFiscal(datos); $('okFiscal').textContent = '✓ Agregado: ' + datos.nombre; }
-    limpiarForm(); $('fDni').focus();
-    setTimeout(() => { $('okFiscal').textContent = ''; }, 3000);
-  }catch(err){ $('errorFiscal').textContent = 'No se pudo guardar. Revisá la conexión y probá de nuevo.'; }
-  finally{ $('btnGuardar').disabled = false; }
+    setTimeout(() => { if($('okFiscal').textContent.endsWith(datos.nombre)) $('okFiscal').textContent = ''; }, 3000);
+  }catch(err){
+    $('okFiscal').textContent = '';
+    if(id) editar({ id, ...datos });
+    else{ aplicarTipo(tipo, false); $('fMesa').value = datos.mesa; $('fNombre').value = datos.nombre; $('fDni').value = datos.dni;
+      $('fLocalidad').value = datos.localidad; $('fProvincia').value = datos.provincia; $('fRol').value = datos.rol; }
+    $('errorFiscal').textContent = 'No se pudo guardar a ' + datos.nombre + '. Revisá la conexión y tocá de nuevo el botón.';
+  }
 });
 
 // ---------- lista ----------
