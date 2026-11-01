@@ -41,6 +41,11 @@
   header.barra a, header.barra button{ color:#fff; }
   .contenedor{ max-width:980px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:18px; }
   .aviso-prueba{ background:#fff3cd; border:1px solid #f0d27a; color:#6b5200; padding:10px 14px; border-radius:10px; font-size:15px; }
+  .aviso-nube{ background:#fff3cd; border:1px solid #f0d27a; color:#6b5200; padding:10px 14px; border-radius:10px; font-size:15px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .aviso-nube[data-estado=sondeo]{ background:#e8f0fe; border-color:#b6cdf7; color:#1b3a6b; }
+  .aviso-nube[data-estado=sin-conexion]{ background:#fdeaea; border-color:#f0b4b4; color:#7a1a1a; }
+  .aviso-nube span{ flex:1 1 320px; }
+  .aviso-nube .boton{ margin-left:auto; }
   section.paso{ background:var(--blanco); border-radius:14px; padding:18px 16px; box-shadow:0 2px 10px -6px rgba(0,0,0,.2); }
   section.paso h2{ font-size:19px; display:flex; align-items:center; gap:10px; margin-bottom:12px; }
   .num{ display:inline-flex; width:30px; height:30px; border-radius:50%; background:var(--rojo); color:#fff; align-items:center; justify-content:center; font-size:16px; flex:none; }
@@ -117,6 +122,10 @@
 
   <div class="contenedor">
     <div class="aviso-prueba oculto" id="avisoPrueba"><b>Modo prueba:</b> la nube todavía no está configurada. Lo que cargues queda solo en esta computadora.</div>
+    <div class="aviso-nube oculto" id="avisoNube" data-estado="sin-conexion">
+      <span id="avisoNubeTexto"></span>
+      <button class="boton gris chico" type="button" id="btnReintentar">Reintentar</button>
+    </div>
 
     <section class="paso">
       <h2><span class="num">1</span> <span id="tituloForm">Cargá un compañero o compañera</span></h2>
@@ -203,19 +212,70 @@ $('verClave').addEventListener('change', e => { $('clave').type = e.target.check
 $('formIngreso').addEventListener('submit', async e => {
   e.preventDefault(); $('errorIngreso').textContent = ''; $('btnEntrar').disabled = true;
   try{ await nube.entrar($('clave').value); if(nube.modoPrueba) mostrarApp(true); }
-  catch(err){ $('errorIngreso').textContent = 'La clave no es correcta. Probá de nuevo.'; }
+  catch(err){
+    $('errorIngreso').textContent = err && err.code === 'sin-conexion'
+      ? 'No se pudo conectar. Revisá el wifi o desactivá el bloqueador de anuncios y probá de nuevo.'
+      : 'La clave no es correcta. Probá de nuevo.';
+  }
   finally{ $('btnEntrar').disabled = false; }
 });
 $('btnSalir').addEventListener('click', async () => { await nube.salir(); if(nube.modoPrueba) mostrarApp(false); });
 
+// ---------- estado de la conexión ----------
+// Un bloqueador de anuncios (uBlock, Brave, AdGuard) o el filtro del wifi pueden cortar
+// firestore.googleapis.com: en vez de quedar colgada, la app lo explica y sigue con la
+// última lista guardada en esta computadora.
+function avisarNube({ estado, copia } = {}){
+  const caja = $('avisoNube'), texto = $('avisoNubeTexto');
+  caja.dataset.estado = estado;
+  if(estado === 'ok'){ caja.classList.add('oculto'); return; }
+  caja.classList.remove('oculto');
+  if(estado === 'conectando'){
+    texto.textContent = 'Conectando con la lista compartida…';
+  }else if(estado === 'sondeo'){
+    texto.innerHTML = '<b>Conexión limitada:</b> el aviso en vivo está bloqueado, así que la lista se actualiza cada 15 segundos. Podés seguir cargando e imprimiendo.';
+  }else{
+    const cuando = copia ? new Date(copia.cuando).toLocaleString('es-AR', { dateStyle:'short', timeStyle:'short' }) : '';
+    texto.innerHTML = '<b>No se pudo conectar con la lista compartida.</b> ' +
+      'Suele ser un bloqueador de anuncios (uBlock, Brave, AdGuard) o el filtro del wifi: permití <b>ctamulticolor.com.ar</b> y <b>firestore.googleapis.com</b>, o abrí la página en una ventana de incógnito. ' +
+      (cuando
+        ? 'Mientras tanto ves la última lista guardada en esta computadora (' + cuando + '); los cambios no se van a guardar.'
+        : 'No hay ninguna copia guardada en esta computadora.');
+  }
+}
+$('btnReintentar').addEventListener('click', async () => {
+  $('btnReintentar').disabled = true;
+  if(cancelarEscucha){ cancelarEscucha(); cancelarEscucha = null; }
+  avisarNube({ estado:'conectando' });
+  try{ cancelarEscucha = await nube.escucharFiscales(lista => { fiscales = lista; dibujarTabla(); }, avisarNube); }
+  catch(e){ avisarNube({ estado:'sin-conexion', copia:nube.leerUltima() }); }
+  $('btnReintentar').disabled = false;
+});
+
 async function mostrarApp(dentro){
   $('ingreso').classList.toggle('oculto', dentro);
   $('app').classList.toggle('oculto', !dentro);
-  if(!dentro){ $('clave').value = ''; if(cancelarEscucha){ cancelarEscucha(); cancelarEscucha = null; } return; }
+  if(!dentro){
+    $('clave').value = ''; $('avisoNube').classList.add('oculto');
+    if(cancelarEscucha){ cancelarEscucha(); cancelarEscucha = null; }
+    return;
+  }
   $('avisoPrueba').classList.toggle('oculto', !nube.modoPrueba);
-  for(const m of ['mesa', 'general']){ try{ disenos[m] = (await nube.leerDiseno(m)) || H.modelo(m).diseno; }catch(e){} }
+  // en modo prueba este callback llega mientras el módulo todavía se está definiendo
+  // (tipoActual, dibujarTabla, etc. están más abajo): se espera un tick
+  await Promise.resolve();
   limpiarForm();
-  cancelarEscucha = await nube.escucharFiscales(lista => { fiscales = lista; dibujarTabla(); });
+  // la lista y los diseños se piden a la vez: si la nube está bloqueada, la lista no espera al diseño
+  const lista = nube.escucharFiscales(f => { fiscales = f; dibujarTabla(); }, avisarNube).then(c => { cancelarEscucha = c; });
+  const disenosListos = Promise.all(['mesa', 'general'].map(async m => {
+    try{ disenos[m] = (await nube.leerDiseno(m)) || H.modelo(m).diseno; }catch(e){}
+  }));
+  try{ await Promise.all([lista, disenosListos]); }
+  catch(err){
+    const copia = nube.leerUltima();
+    avisarNube({ estado:'sin-conexion', copia });
+    if(copia){ fiscales = copia.lista; dibujarTabla(); }
+  }
 }
 nube.alCambiarSesion(mostrarApp);
 
@@ -295,7 +355,9 @@ $('formFiscal').addEventListener('submit', async e => {
     if(id) editar({ id, ...datos });
     else{ aplicarTipo(tipo, false); $('fMesa').value = datos.mesa; $('fNombre').value = datos.nombre; $('fDni').value = datos.dni;
       $('fLocalidad').value = datos.localidad; $('fProvincia').value = datos.provincia; $('fRol').value = datos.rol; }
-    $('errorFiscal').textContent = 'No se pudo guardar a ' + datos.nombre + '. Revisá la conexión y tocá de nuevo el botón.';
+    $('errorFiscal').textContent = err && err.code === 'sin-conexion'
+      ? 'No se pudo confirmar el guardado de ' + datos.nombre + ': revisá la conexión y, cuando vuelva, mirá la lista antes de volver a agregarlo.'
+      : 'No se pudo guardar a ' + datos.nombre + '. Revisá la conexión y tocá de nuevo el botón.';
   }
 });
 
@@ -354,7 +416,11 @@ function pedirBorrar(td, f){
   const caja = document.createElement('span'); caja.className = 'confirmar';
   caja.append('¿Borrar? ');
   const si = document.createElement('button'); si.type = 'button'; si.className = 'boton chico'; si.textContent = 'Sí, borrar';
-  si.addEventListener('click', async () => { si.disabled = true; try{ await nube.borrarFiscal(f.id); }catch(e){ dibujarTabla(); } });
+  si.addEventListener('click', async () => {
+    si.disabled = true;
+    try{ await nube.borrarFiscal(f.id); }
+    catch(e){ dibujarTabla(); $('errorFiscal').textContent = 'No se pudo borrar a ' + f.nombre + '. Revisá la conexión y probá de nuevo.'; }
+  });
   const no = document.createElement('button'); no.type = 'button'; no.className = 'boton gris chico'; no.textContent = 'No';
   no.addEventListener('click', dibujarTabla);
   caja.append(si, no); td.appendChild(caja);
