@@ -1,10 +1,11 @@
 ---
 // como-votar.astro — Date (with "a confirmar" state), requisitos [PENDIENTE],
-// and a note that the "¿dónde voto?" lookup arrives when mesas are assigned.
-// No lookup implemented in this phase (mesas not assigned yet).
+// and "¿dónde voto?" linking to the official CTA-T padrón lookup + its Telegram bot
+// (we can't embed it: it has its own captcha).
 import Layout from '../layouts/Layout.astro';
 import Pendiente from '../components/Pendiente.astro';
 import { ELECTION_DATE, ELECTION_DATE_CONFIRMED } from '../data/site';
+import { PADRON_URL, PADRON_TELEGRAM_URL } from '../data/share';
 
 const fechaFormateada = new Intl.DateTimeFormat('es-AR', {
   weekday: 'long',
@@ -58,9 +59,26 @@ const fechaFormateada = new Intl.DateTimeFormat('es-AR', {
           ¿Dónde voto?
         </p>
         <p class="mt-2 font-body text-sm text-dark/70">
-          Todavía no están asignadas las mesas para esta elección. En cuanto la CTA La Matanza las
-          publique, vamos a habilitar acá una consulta por DNI para saber en qué mesa te toca votar.
+          Consultá en el padrón oficial de la CTA-T con tu tipo y número de documento.
         </p>
+        <div class="mt-4 flex flex-col gap-2.5 sm:flex-row">
+          <a
+            href={PADRON_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="gradient-multi inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full px-5 font-display text-sm font-black uppercase tracking-tight text-white shadow-md"
+          >
+            <span aria-hidden="true">🗳️</span> Consultar el padrón
+          </a>
+          <a
+            href={PADRON_TELEGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full border border-dark/15 bg-white px-5 font-body text-sm font-semibold text-dark"
+          >
+            Consultar por Telegram
+          </a>
+        </div>
       </div>
 
       <!-- Requisitos -->

@@ -36,3 +36,27 @@ export const BOLETA_WEBP_PATH = '/boleta/boleta-lista-6-multicolor-cta-la-matanz
  * full-size image just to show a ~112px-tall preview. */
 export const BOLETA_THUMB_WEBP_PATH = '/boleta/boleta-lista-6-multicolor-cta-la-matanza-thumb.webp';
 export const BOLETA_JPG_FILENAME = 'boleta-lista-6-multicolor.jpg';
+
+/** Official CTA-T padrón lookup (by document; has its own captcha) and its Telegram bot. */
+export const PADRON_URL = 'https://consultapadron.cta.org.ar/';
+export const PADRON_TELEGRAM_URL = 'https://t.me/EleccionesCTAT_bot';
+
+/** Campaign flyers offered for download in the share modal. */
+export const FLYERS = [
+  {
+    jpg: '/flyers/flyer-lista-6-multicolor-cta-la-matanza.jpg',
+    thumb: '/flyers/flyer-lista-6-multicolor-cta-la-matanza-thumb.webp',
+    filename: 'flyer-lista-6-multicolor-cta-la-matanza.jpg',
+    label: 'Flyer La Matanza',
+    width: 240,
+    height: 318,
+  },
+  {
+    jpg: '/flyers/flyer-lista-6-multicolor-nacional.jpg',
+    thumb: '/flyers/flyer-lista-6-multicolor-nacional-thumb.webp',
+    filename: 'flyer-lista-6-multicolor-nacional.jpg',
+    label: 'Flyer nacional',
+    width: 226,
+    height: 320,
+  },
+] as const;
