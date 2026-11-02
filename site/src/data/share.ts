@@ -5,7 +5,7 @@
 import { SITE_URL, SLOGAN_1, SLOGAN_2 } from './site';
 
 export const SHARE_TEXTS = {
-  boleta: `Esta es la boleta de la Lista 6 Multicolor para la CTA La Matanza. El 3 de noviembre votamos Lista 6. ${SLOGAN_2}.`,
+  boleta: `Esta es la lista completa de la Lista 6 Multicolor para la CTA La Matanza. El 3 de noviembre votamos Lista 6. ${SLOGAN_2}.`,
   sitio: `Lista 6 Multicolor — CTA La Matanza. ${SLOGAN_1}. Conocé la lista, la historia de la CTA y cómo votar:`,
   fecha: `El 3 de noviembre de 2026 son las elecciones de la CTA La Matanza. Votamos Lista 6 Multicolor. Toda la info para votar:`,
   lista: `Buscá a tus compañerxs en la Lista 6 Multicolor para la CTA La Matanza: 106 candidaturas, con buscador.`,
@@ -35,7 +35,7 @@ export const BOLETA_WEBP_PATH = '/boleta/boleta-lista-6-multicolor-cta-la-matanz
 /** Small WebP (240×320) for the share modal thumbnail — avoids downloading the
  * full-size image just to show a ~112px-tall preview. */
 export const BOLETA_THUMB_WEBP_PATH = '/boleta/boleta-lista-6-multicolor-cta-la-matanza-thumb.webp';
-export const BOLETA_JPG_FILENAME = 'boleta-lista-6-multicolor.jpg';
+export const BOLETA_JPG_FILENAME = 'lista-completa-6-multicolor.jpg';
 
 /** Official CTA-T padrón lookup (by document; has its own captcha) and its Telegram bot. */
 export const PADRON_URL = 'https://consultapadron.cta.org.ar/';
