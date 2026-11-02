@@ -12,7 +12,6 @@ const multicolorLetters = 'MULTICOLOR'.split('');
 
 const waSitio = waLink('sitio');
 const waFecha = waLink('fecha');
-const waLista = waLink('lista');
 const waSumate = waLink('sumate');
 const waBoletaFallback = waLink('boleta');
 
@@ -121,12 +120,6 @@ const WA_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" 
         <a href={waFecha} target="_blank" rel="noopener noreferrer" class="share-action">
           <span class="share-action__icon" aria-hidden="true" set:html={WA_ICON} />
           <span>Recordar la fecha: 3 de noviembre</span>
-        </a>
-      </li>
-      <li>
-        <a href={waLista} target="_blank" rel="noopener noreferrer" class="share-action">
-          <span class="share-action__icon" aria-hidden="true" set:html={WA_ICON} />
-          <span>Buscate en la lista</span>
         </a>
       </li>
       <li>
