@@ -67,5 +67,7 @@
 .hoja-115 .h115-dato{ letter-spacing:.15px; }
 .hoja-115 .h115-punto{ display:inline-block; height:1.15em; vertical-align:baseline; overflow:hidden;
   border-bottom:.3mm dotted #333; }
+.hoja-115 .h115-firma-img{ position:absolute; left:84.95mm; top:157.65mm; width:41.75mm; }
+.hoja-115 .h115-firma-img img{ display:block; width:100%; height:auto; }
 .hoja-115 .h115-firma{ position:absolute; left:70mm; top:178.6mm; width:71.5mm; text-align:center;
   font-size:10pt; line-height:3.75mm; }

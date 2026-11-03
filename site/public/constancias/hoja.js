@@ -206,7 +206,7 @@
 
   // Reproduce el modelo escaneado: cada bloque va en su posición (medida sobre el original, en mm)
   // y el estilo vive en hoja.css (.hoja-115). Solo se completan el nombre y el DNI.
-  function crear115(campos){
+  function crear115(campos, tinta){
     var c = campos || {};
     var nombre = (c.nombre || '').trim(), dni = String(c.dni || '').replace(/\D/g, '');
     // vacío = renglón punteado para escribir a mano
@@ -240,7 +240,9 @@
           'Regional Provincial y Nacional (debe consignarse Art. 115 B.3) -</p>' +
         '<p>Extendemos la presente para ser presentada ante quien corresponda.-</p>' +
       '</div>' +
+      '<div class="h115-firma-img"><img data-firma="firma-echegoyen" alt="Firma Cristina Echegoyen"></div>' +
       '<div class="h115-firma">Cristina Echegoyen<br>Secretaria Administrativa<br>Consejo Ejecutivo Provincial<br>SUTEBA</div>';
+    aplicarTinta(hoja, tinta);
     return hoja;
   }
 
