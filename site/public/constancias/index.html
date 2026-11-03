@@ -464,6 +464,11 @@ $('chkBlanco').addEventListener('change', () => {
 });
 $('fCantBlanco').addEventListener('input', actualizarElegidas);
 $('fTipoBlanco').addEventListener('change', actualizarElegidas);
+// la constancia Art. 115 tiene una sola hoja: no hay que elegir N°2 / N°3 para las blancas
+document.querySelectorAll('input[name="hojaTipo"]').forEach(r => r.addEventListener('change', () => {
+  $('fTipoBlanco').classList.toggle('oculto', es115());
+  actualizarElegidas();
+}));
 
 function actualizarElegidas(){
   if(ocupado) return;

@@ -30,3 +30,42 @@
 .hoja .linea-l6{ width:58mm; height:2mm; border-top:1.3px dotted #333; }
 .hoja .rotulo-l6{ width:58mm; text-align:center; font-weight:bold; font-size:11pt; }
 .hoja .firma{ z-index:7; }
+
+/* ---------- Constancia de Fiscal / Presidente (Art. 115 B.3) ----------
+   Reproducción del modelo de SUTEBA escaneado ("115 cta.pdf"). Las medidas salen del escaneo
+   a 300 dpi: cada bloque va en su posición absoluta y no se toca desde "Ajustar diseño". */
+.hoja-115{ font-family:"Times New Roman", "Liberation Serif", serif; color:#000; }
+.hoja-115 .h115-barra{ position:absolute; left:44.3mm; top:25.5mm; width:119.5mm; height:3mm;
+  background:#111; color:#fff; text-align:center; line-height:3mm; overflow:hidden;
+  font-family:Arial, "Liberation Sans", sans-serif; font-weight:700; font-size:8.3pt;
+  letter-spacing:0; white-space:nowrap; }
+.hoja-115 .h115-logo{ position:absolute; left:27.7mm; top:30.3mm; width:22.1mm; }
+.hoja-115 .h115-dir{ position:absolute; left:56.8mm; top:31.2mm; width:110mm; text-align:center;
+  font-family:Arial, "Liberation Sans", sans-serif; font-weight:700; font-size:6.9pt; line-height:2.85mm; }
+.hoja-115 .h115-dir > div{ white-space:nowrap; }
+.hoja-115 .h115-dir .d2{ font-size:7.1pt; }
+.hoja-115 .h115-dir .d3{ letter-spacing:.68mm; margin-left:-1.2mm; }
+.hoja-115 .h115-dir .g1{ display:inline-block; width:9.4mm; }
+.hoja-115 .h115-dir .g2{ display:inline-block; width:2.4mm; }
+.hoja-115 .h115-regla{ position:absolute; left:47.6mm; top:42.2mm; width:121.3mm; border-top:.2mm solid #222; }
+.hoja-115 .h115-lateral{ position:absolute; left:26.6mm; top:40.1mm; width:17.4mm; text-align:center;
+  font-family:Arial, "Liberation Sans", sans-serif; font-weight:700; }
+.hoja-115 .h115-ctera{ font-size:6.5pt; line-height:1; margin-left:.7mm; }
+.hoja-115 .h115-secc{ font-size:4.9pt; line-height:2.6mm; margin-top:.35mm; }
+.hoja-115 .h115-lista{ text-align:left; font-size:3.6pt; line-height:1.521mm; margin-top:2.6mm; }
+.hoja-115 .h115-lista div{ white-space:nowrap; }
+.hoja-115 .h115-titulo{ position:absolute; left:44.3mm; top:57.9mm; width:133.3mm; text-align:center;
+  font-weight:700; font-size:10pt; line-height:1; text-decoration:underline; text-underline-offset:.9mm; }
+.hoja-115 .h115-subtitulo{ position:absolute; left:40.8mm; top:62.1mm; width:133mm; text-align:center;
+  font-weight:700; font-size:10pt; line-height:1; text-decoration:underline; text-underline-offset:.8mm; }
+.hoja-115 .h115-fecha{ position:absolute; left:48.1mm; top:73.3mm; width:117.7mm; text-align:right;
+  font-size:10pt; line-height:1; }
+.hoja-115 .h115-cuerpo{ position:absolute; left:53.2mm; top:81.2mm; width:112.3mm; font-size:10pt;
+  line-height:11.85mm; letter-spacing:-.005mm; }
+.hoja-115 .h115-cuerpo p{ margin:0; text-align:justify; }
+.hoja-115 .h115-cuerpo p + p{ margin-top:-6.2mm; margin-left:-5.1mm; letter-spacing:-.045mm; }
+.hoja-115 .h115-dato{ letter-spacing:.15px; }
+.hoja-115 .h115-punto{ display:inline-block; height:1.15em; vertical-align:baseline; overflow:hidden;
+  border-bottom:.3mm dotted #333; }
+.hoja-115 .h115-firma{ position:absolute; left:70mm; top:178.6mm; width:71.5mm; text-align:center;
+  font-size:10pt; line-height:3.75mm; }
