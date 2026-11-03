@@ -182,6 +182,64 @@
     return hoja;
   }
 
+  // ---------- Constancia de Fiscal / Presidente (Art. 115 B.3) ----------
+  // Texto literal del modelo "115 cta.pdf" (SUTEBA, Consejo Ejecutivo Provincial). Es la que el
+  // fiscal presenta en su trabajo. Solo cambian nombre y DNI (vacíos = hoja en blanco).
+  // La firma NO va impresa: queda el espacio para firmar a mano, con la aclaración del modelo.
+  var SECCIONALES_115 = ['25 DE MAYO','9 DE JULIO','ADOLFO ALSINA','A. GONZALES CHAVES','ALBERTI','ALTE. BROWN','ARRECIFES',
+    'AVELLANEDA','AYACUCHO','AZUL','BAHIA BLANCA','BALCARCE','BARADERO','BENITO JUAREZ','BERAZATEGUI','BERISSO','BOLIVAR',
+    'BRAGADO','BRANDSEN','CAMPANA','CAÑUELAS','CAP. SARMIENTO','CARLOS CASARES','CARLOS TEJEDOR','CARMEN DE ARECO','CASTELLI',
+    'CHACABUCO','CHASCOMUS','CHIVILCOY','CNEL. DORREGO','CNEL. PRINGLES','CNEL. ROSALES','CNEL. SUAREZ','COLON','DAIREAUX',
+    'DOLORES','ENSENADA','ESCOBAR','E.ECHEVERRIA','EZEIZA','EXALTACION DE LA CRUZ','FLORENCIO VARELA','FLORENTINO AMEGHINO',
+    'GRAL. ALVARADO','GRAL. ALVEAR','GRAL. ARENALES','GRAL. BELGRANO','GRAL. LA MADRID','GRAL. LAS HERAS','GRAL. MADARIAGA',
+    'GRAL. PAZ','GRAL. PINTO','GRAL. PUEYRREDON','GRAL. RODRIGUEZ','GRAL. SAN MARTIN','3 DE FEBRERO','SAN MIGUEL','JOSE C. PAZ',
+    'MALVINAS ARGENTINAS','GRAL. VIAMONTE','GRAL. VILLEGAS','GUAMINI','HIPOLITO YRIGOYEN','HURLINGHAM','ITUZAINGO','JUNIN',
+    'LA MATANZA','LA PLATA','LANUS','LAPRIDA','LAS FLORES','GRAL. LAVALLE','LEANDRO N. ALEM','LEZAMA','LINCOLN','LOBERIA',
+    'LOBOS','LOMAS DE ZAMORA','LUJAN','MAGDALENA','MAIPU','MAR CHIQUITA','MARCOS PAZ','MERCEDES','MERLO','MONTE HERMOSO',
+    'MORENO','MORON','NAVARRO','NECOCHEA','OLAVARRIA','PARTIDO DE LA COSTA','PATAGONES','PTE PERON','PEHUAJO','PELLEGRINI',
+    'PERGAMINO','PILA','PILAR','PINAMAR','PUAN','PUNTA INDIO','QUILMES','RAMALLO','RAUCH','RIVADAVIA','ROJAS','ROQUE PEREZ',
+    'SAAVEDRA','SALADILLO','SALLIQUELO','SALTO','SAN ANDRES DE GILES','SAN ANTONIO DE ARECO','SAN CAYETANO','SAN FERNANDO',
+    'SAN ISIDRO','SAN MIGUEL DEL MONTE','SAN NICOLAS','SAN PEDRO','SAN VICENTE','SUIPACHA','TANDIL','TAPALQUE','TIGRE',
+    'TORDILLO','TORNQUIST','TRENQUE LAUQUEN','TRES ARROYOS','TRES LOMAS','VICENTE LOPEZ','VILLA GESELL','VILLARINO','ZARATE'];
+
+  function esc115(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function crear115(campos){
+    var c = campos || {};
+    var nombre = (c.nombre || '').trim(), dni = String(c.dni || '').replace(/\D/g, '');
+    var dato = function(v, ancho){ return v
+      ? '<span style="letter-spacing:.6px">' + esc115(v) + '</span>'
+      : '<span style="display:inline-block;width:' + ancho + ';border-bottom:1px dotted #333">&nbsp;</span>'; };
+    var lis = SECCIONALES_115.map(function(s){ return '<div' + (s === 'LA MATANZA' ? ' style="font-weight:700;color:#000"' : '') + '>' + s + '</div>'; }).join('');
+    var hoja = document.createElement('div'); hoja.className = 'hoja hoja-115';
+    hoja.innerHTML =
+      '<div style="position:absolute;left:20mm;top:31mm;width:24mm;text-align:center;font-family:Arial,sans-serif">' +
+        '<img src="assets/logo-suteba.png" alt="Suteba" style="width:24mm;display:block;margin:0 auto">' +
+        '<div style="font-family:\'Times New Roman\',serif;font-size:7pt;margin-top:1mm;line-height:1.15">CTERA – CTA<br>Seccionales,<br>Juntas Promotoras<br>y Delegaciones:</div>' +
+        '<div style="font-size:3.9pt;font-weight:700;line-height:1.12;text-align:left;margin-top:2mm">' + lis + '</div>' +
+      '</div>' +
+      '<div style="position:absolute;left:47mm;right:20mm;top:26mm;font-family:Arial,sans-serif;text-align:center">' +
+        '<div style="background:#111;color:#fff;font-weight:700;font-size:9pt;padding:.6mm 1mm;letter-spacing:.2px">SINDICATO UNIFICADO DE TRABAJADORES DE LA EDUCACION DE BUENOS AIRES</div>' +
+        '<div style="font-size:7.6pt;font-weight:700;margin-top:2mm;line-height:1.35">Piedras 740 (1070) – Ciudad Autónoma de Buenos Aires – República Argentina –<br>' +
+          'Tel. 4361-6647/3700 &nbsp;&nbsp; E-mail : suteba@suteba.org.ar &nbsp;&nbsp; <u>www.suteba.org.ar</u><br>' +
+          '<span style="letter-spacing:1.5px">- Personería Gremial 1418 -</span></div>' +
+        '<div style="border-top:1px solid #333;margin-top:1.5mm"></div>' +
+      '</div>' +
+      '<div style="position:absolute;left:52mm;right:22mm;top:62mm;font-family:\'Times New Roman\',\'Liberation Serif\',serif;font-size:12pt;color:#111">' +
+        '<div style="text-align:center;font-weight:700;line-height:1.3"><u>CONSTANCIA DE &nbsp;FISCAL / PRESIDENTE</u><br><u>Elecciones CTA-T &nbsp;2026</u></div>' +
+        '<div style="text-align:right;margin:11mm 0 9mm">Ciudad Autónoma de Buenos Aires, 3 de &nbsp;noviembre de 2026.-</div>' +
+        '<p style="margin:0;line-height:2.6;text-align:justify;text-indent:14mm">Por la presente dejamos constancia que la/el Compañera/o ' + dato(nombre, '70mm') +
+          ' DNI ' + dato(dni, '30mm') + ' está afectada/o desde el día de la fecha hasta el 04-11-2026, &nbsp;al acto eleccionario de la Central de Trabajadores y Trabajadoras de la ' +
+          'Argentina (CTA-T) Regional Provincial y Nacional (debe consignarse Art.&nbsp;115 B.3)&nbsp;-</p>' +
+        '<p style="margin:2mm 0 0 -4mm">Extendemos la presente para ser presentada ante quien corresponda.-</p>' +
+        '<div style="margin:30mm 0 0 auto;width:72mm;text-align:center;font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.3">' +
+          '<div style="border-top:1px dotted #555;margin-bottom:2mm"></div>' +
+          'Cristina Echegoyen<br>Secretaria Administrativa<br>Consejo Ejecutivo Provincial<br>SUTEBA</div>' +
+      '</div>';
+    return hoja;
+  }
+
   window.Hoja = { HTML:HTML, DISENO:DISENO, CAMPOS_FIJOS:CAMPOS_FIJOS, FUENTES:FUENTES, MODELOS:MODELOS, modelo:modelo,
-    deltas:deltas, aplicarPieza:aplicarPieza, aplicarTinta:aplicarTinta, aplicarCampos:aplicarCampos, crear:crear, crearModelo:crearModelo };
+    deltas:deltas, aplicarPieza:aplicarPieza, aplicarTinta:aplicarTinta, aplicarCampos:aplicarCampos, crear:crear, crearModelo:crearModelo,
+    crear115:crear115 };
 })();

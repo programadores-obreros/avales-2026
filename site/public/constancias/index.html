@@ -170,6 +170,10 @@
 
     <section class="paso">
       <h2><span class="num">3</span> Imprimí o enviá</h2>
+      <div class="tipos" role="radiogroup" aria-label="Qué constancia sale">
+        <label class="tipo"><input type="radio" name="hojaTipo" value="designacion" checked><span><b>Designación de fiscal</b><small>Formulario N°2 / N°3 · CTA-T</small></span></label>
+        <label class="tipo"><input type="radio" name="hojaTipo" value="art115"><span><b>Constancia Art. 115</b><small>Fiscal / Presidente · para presentar en el trabajo</small></span></label>
+      </div>
       <div class="imprimir-caja">
         <button class="boton verde" type="button" id="btnImprimir" disabled>Imprimir las elegidas</button>
         <button class="boton wapp" type="button" id="btnWhatsapp" disabled>Enviar por WhatsApp</button>
@@ -443,7 +447,9 @@ function fichasAEmitir(){
   for(let i = 0; i < n; i++) lista.push({ blanco:true, tipo });
   return lista;
 }
+const es115 = () => (document.querySelector('input[name="hojaTipo"]:checked') || {}).value === 'art115';
 function crearHoja(f){
+  if(es115()) return H.crear115(f.blanco ? {} : f);
   if(!f.blanco) return H.crearModelo(tipoDe(f), disenos[tipoDe(f)], f);
   // hoja en blanco: ningún dato impreso (localidad, provincia, rol, mesa, nombre y DNI
   // se completan a mano). Las firmas, los logos y la fecha de la elección van impresos.
@@ -511,6 +517,10 @@ function cargarLibsPdf(){
 
 const TEXTO_WA = 'Constancias de fiscales — Elecciones 3 de noviembre de 2026 — CTA La Matanza';
 const nombrePdf = lista => {
+  if(es115()){
+    if(lista.length === 1 && !lista[0].blanco) return 'constancia-115-CTA-' + lista[0].dni + '.pdf';
+    return 'constancias-115-CTA-' + lista.length + '.pdf';
+  }
   if(lista.every(f => f.blanco))
     return lista.length === 1 ? 'constancia-en-blanco.pdf' : 'constancias-en-blanco-' + lista.length + '.pdf';
   if(lista.length === 1) return 'constancia-CTA-' + lista[0].dni + '.pdf';
