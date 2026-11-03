@@ -1,3 +1,17 @@
+/* ---------- Fuentes propias de la constancia ----------
+   El modelo escaneado tiene los saltos de línea y las posiciones fijos: no puede depender de
+   las fuentes de cada dispositivo (en Android no existe "Times New Roman" y el cuerpo se
+   reacomoda en 6 renglones). Son Liberation Serif/Sans, métricamente iguales a Times New
+   Roman/Arial, recortadas a los caracteres que se usan y servidas desde el propio sitio. */
+@font-face{ font-family:'HojaSerif'; font-style:normal; font-weight:400;
+  src:url('assets/fuentes/liberation-serif-regular.woff2') format('woff2'); font-display:swap; }
+@font-face{ font-family:'HojaSerif'; font-style:normal; font-weight:700;
+  src:url('assets/fuentes/liberation-serif-bold.woff2') format('woff2'); font-display:swap; }
+@font-face{ font-family:'HojaSans'; font-style:normal; font-weight:400;
+  src:url('assets/fuentes/liberation-sans-regular.woff2') format('woff2'); font-display:swap; }
+@font-face{ font-family:'HojaSans'; font-style:normal; font-weight:700;
+  src:url('assets/fuentes/liberation-sans-bold.woff2') format('woff2'); font-display:swap; }
+
 /* Hoja A4 del Formulario N°3 (CTA-T) — compartida por la app (index.html) y el
    ajuste de diseño (ajustar.html). Todo en mm, igual que la impresión. */
 .hoja{ position:relative; width:210mm; height:297mm; background:#fff; overflow:hidden; color:#111;
@@ -34,14 +48,14 @@
 /* ---------- Constancia de Fiscal / Presidente (Art. 115 B.3) ----------
    Reproducción del modelo de SUTEBA escaneado ("115 cta.pdf"). Las medidas salen del escaneo
    a 300 dpi: cada bloque va en su posición absoluta y no se toca desde "Ajustar diseño". */
-.hoja-115{ font-family:"Times New Roman", "Liberation Serif", serif; color:#000; }
+.hoja-115{ font-family:"HojaSerif", "Times New Roman", "Liberation Serif", serif; color:#000; }
 .hoja-115 .h115-barra{ position:absolute; left:44.3mm; top:25.5mm; width:119.5mm; height:3mm;
   background:#111; color:#fff; text-align:center; line-height:3mm; overflow:hidden;
-  font-family:Arial, "Liberation Sans", sans-serif; font-weight:700; font-size:8.3pt;
+  font-family:"HojaSans", Arial, "Liberation Sans", sans-serif; font-weight:700; font-size:8.3pt;
   letter-spacing:0; white-space:nowrap; }
 .hoja-115 .h115-logo{ position:absolute; left:27.7mm; top:30.3mm; width:22.1mm; }
 .hoja-115 .h115-dir{ position:absolute; left:56.8mm; top:31.2mm; width:110mm; text-align:center;
-  font-family:Arial, "Liberation Sans", sans-serif; font-weight:700; font-size:6.9pt; line-height:2.85mm; }
+  font-family:"HojaSans", Arial, "Liberation Sans", sans-serif; font-weight:700; font-size:6.9pt; line-height:2.85mm; }
 .hoja-115 .h115-dir > div{ white-space:nowrap; }
 .hoja-115 .h115-dir .d2{ font-size:7.1pt; }
 .hoja-115 .h115-dir .d3{ letter-spacing:.68mm; margin-left:-1.2mm; }
@@ -49,7 +63,7 @@
 .hoja-115 .h115-dir .g2{ display:inline-block; width:2.4mm; }
 .hoja-115 .h115-regla{ position:absolute; left:47.6mm; top:42.2mm; width:121.3mm; border-top:.2mm solid #222; }
 .hoja-115 .h115-lateral{ position:absolute; left:26.6mm; top:40.1mm; width:17.4mm; text-align:center;
-  font-family:Arial, "Liberation Sans", sans-serif; font-weight:700; }
+  font-family:"HojaSans", Arial, "Liberation Sans", sans-serif; font-weight:700; }
 .hoja-115 .h115-ctera{ font-size:6.5pt; line-height:1; margin-left:.7mm; }
 .hoja-115 .h115-secc{ font-size:4.9pt; line-height:2.6mm; margin-top:.35mm; }
 .hoja-115 .h115-lista{ text-align:left; font-size:3.6pt; line-height:1.521mm; margin-top:2.6mm; }

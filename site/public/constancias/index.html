@@ -487,6 +487,12 @@ const conLimite = (promesa, ms) => new Promise(resolver => {
   promesa.then(listo, listo);
 });
 async function listoParaDibujar(caja){
+  // las fuentes propias del modelo Art. 115: pedirlas explícitamente antes de medir o dibujar
+  // (solo si hay una hoja 115, para no bajar 106 KB en las otras constancias)
+  if(caja.querySelector('.hoja-115') && document.fonts && document.fonts.load){
+    const caras = ['400 10pt HojaSerif','700 10pt HojaSerif','400 7pt HojaSans','700 7pt HojaSans'];
+    await conLimite(Promise.all(caras.map(c => document.fonts.load(c).catch(() => {}))), 2500);
+  }
   await conLimite(document.fonts.ready, 2500);
   await conLimite(Promise.all(Array.from(caja.querySelectorAll('img')).map(i => i.decode().catch(() => {}))), 5000);
 }
